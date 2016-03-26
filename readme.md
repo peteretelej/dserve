@@ -1,1 +1,0 @@
-#dserve - Directory serve
