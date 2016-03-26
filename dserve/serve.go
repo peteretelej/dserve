@@ -35,7 +35,7 @@ func Serve(folder, listenAddr string) error {
 	lAs := []string{listenAddr, ":9012", ":9013", ":9014", ":9015", ":9016"}
 
 	for _, val := range lAs {
-		log.Printf("dserve listening on %s. Visit on browser at http://localhost:%s", val, val)
+		log.Printf("dserve listening on %s. Visit http://localhost:%s", val, val)
 		err := http.ListenAndServe(val, nil)
 		if err != nil {
 			log.Printf("Error listening on %s. trying next port..\n", val)
