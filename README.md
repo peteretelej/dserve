@@ -4,9 +4,9 @@ __dserve__ serves a specified directory via HTTP on a specified listening addres
 
 ## dserve CLI Installation Options
 
-- Download Windows or Linux executable application from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
+Option 1. Download Windows or Linux executable application from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
 
-- Install via `go get`. (Requires Golang)
+Option 2. Install via `go get`. (Requires Golang)
 
 ```
 go get github.com/peteretelej/dserve
