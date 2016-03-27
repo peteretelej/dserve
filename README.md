@@ -4,13 +4,14 @@ __dserve__ serves a specified directory via HTTP on a specified listening addres
 
 ## dserve CLI Installation Options
 
-- Install via `go get`
+- Download Windows or Linux executable application from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
+
+- Install via `go get`. (Requires Golang)
 
 ```
 go get github.com/peteretelej/dserve
 ```
 
-- Download executable binary from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
 
 
 ### Usage
@@ -18,7 +19,6 @@ go get github.com/peteretelej/dserve
 Run `dserve` command while in the directory to serve. Serves the current working directory on ":9011", accessible on browsers e.g via http://localhost:9011
 
 ```
-go get bitbucket.org/etelej/dserve
 cd ~/myProject
 dserve
 ```
