@@ -10,7 +10,7 @@ __dserve__ serves a specified directory via HTTP on a specified listening addres
 go get github.com/peteretelej/dserve
 ```
 
-- Download executable binary from Github releases page
+- Download executable binary from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
 
 
 ### Usage
