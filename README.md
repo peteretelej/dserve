@@ -23,7 +23,12 @@ cd ~/myProject
 dserve
 ```
 
-Specifying custom directory and listen address
+Or from any directory
+```
+dserve -d ~/myProject
+``` 
+
+- Specifying custom directory and listen address
 ```
 dserve -d /home/chief/mystaticwebsite -l 8011
 # Note: serving on port 80 requires root
