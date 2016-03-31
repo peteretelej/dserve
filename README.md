@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/peteretelej/dserve.svg?branch=master)](https://travis-ci.org/peteretelej/dserve)
+
 # dserve - Directory Serve
 
 __dserve__ serves a specified directory via HTTP on a specified listening address
