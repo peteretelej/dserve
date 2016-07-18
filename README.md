@@ -14,8 +14,6 @@ Option 2. Install via `go get`. (Requires Golang)
 go get github.com/peteretelej/dserve
 ```
 
-
-
 ### Usage
 
 Run `dserve` command while in the directory to serve. Serves the current working directory on ":9011", accessible on browsers e.g via http://localhost:9011
@@ -66,4 +64,13 @@ func main() {
 	dserve.Serve(".",":80")
 }
 ```
+## Secure directory
+The secure directory (served at secure) uses `http basic authentication`. Files are served from the `secure/static` directory onto `/secure/`
 
+Files:
+	- secure/securepass.json.sample - a sample username and password
+	- secure/securepass.json - your username and password ( create this file )
+
+Note: 
+	- Though the `secure/securepass.json` password is not served/ visible, it is stored in plaintext
+	- Dserve does not need to be restart to pick new credenctions

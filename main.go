@@ -35,7 +35,7 @@ func main() {
 			listenAddr = c.String("l")
 		}
 		// Launching dserve on the current working directory
-		log.Fatal(dserve.Serve(dir, listenAddr))
+		dserve.Serve(dir, listenAddr)
 	}
 
 	app.Run(os.Args)
