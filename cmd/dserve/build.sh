@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+cd ../../
+
+go vet ./...
+
+cd cmd/dserve 
+
 rm -rf releases/*
 
 # windows and linux x64

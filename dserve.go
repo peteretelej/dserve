@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Serve launches HTTP server serving on listenAddr and servers a basic_auth secured directory at secure/static
 func Serve(listenAddr string, secureDir bool) error {
 	mux := http.NewServeMux()
 

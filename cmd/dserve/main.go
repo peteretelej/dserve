@@ -38,6 +38,6 @@ func main() {
 }
 
 func handleFatal(err error) {
-	log.Print("dserve fatal error: %v", err)
+	log.Printf("dserve fatal error: %v", err)
 	time.Sleep(5 * time.Second)
 }
