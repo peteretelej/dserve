@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+const securedir = "secure/static"
+
 // AuthCreds defines the http basic authentication credentials for /secure
 // Note: Though the password is not served, it is stored in plaintext
 type AuthCreds struct {
@@ -19,16 +21,12 @@ type AuthCreds struct {
 	Password string `json:"password"`
 }
 
-var securedir string
-
 // authInit initializes the secure directory
-func authInit() {
-	// files served on /secure (secure/static)
-	securedir = basedir + "/secure/static"
+func authInit() error {
 	if _, err := os.Stat(securedir); err != nil {
 		err := os.MkdirAll(securedir, 0700)
 		if err != nil {
-			log.Fatal(err.Error())
+			return err
 		}
 	}
 	// get creds
@@ -44,8 +42,9 @@ func authInit() {
 		if err != nil {
 			log.Fatal(err.Error())
 		}
-		err = ioutil.WriteFile(basedir+"/secure/securepass.json.sample", d, 0644)
+		return ioutil.WriteFile("secure/securepass.json.sample", d, 0644)
 	}
+	return nil
 }
 
 // validBasicAuth checks the authentication credentials to access /secure files
@@ -72,7 +71,7 @@ func validBasicAuth(r *http.Request) bool {
 // getCreds gets the current http basic credentials
 func getCreds() (*AuthCreds, error) {
 	creds := &AuthCreds{}
-	sp, err := ioutil.ReadFile(basedir + "/secure/securepass.json")
+	sp, err := ioutil.ReadFile("/secure/securepass.json")
 	if err != nil {
 		return creds, err
 	}

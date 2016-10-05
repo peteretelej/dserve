@@ -23,54 +23,64 @@ cd ~/myProject
 dserve
 ```
 
-Or from any directory
+
+serve a directory
 ```
-dserve -d ~/myProject
+dserve --dir ~/myProject
 ``` 
 
-- Specifying custom directory and listen address
+serve current directory on a specific address
 ```
-dserve -d /home/chief/mystaticwebsite -l 8011
-# Note: serving on port 80 requires root
+dserve --port 8011
 ```
 
-- `dserve --help` for cli usage help
-- `-l`, `--listen-addr` - custom listen address
-- `-d`, `--directory` - custom directory to serve
+serve current directory on localhost
+```
+dserve --local
+```
+
+serve current directory as well as a basic_auth secured directory secure/static
+```
+dserve --secure
+```
+
+
+- Specifying custom directory and listen address, on localhost
+```
+dserve --dir /home/chief/mystaticwebsite --port 8011 --local
+# Note: serving on port 80 requires admin rights
+```
+
+`dserve --help` for cli usage help
+
+- `--port` - custom port to listen on, default is 9011
+- `--dir` - custom directory to serve, default is the directory dserve is run from
+- `--local` - only serve on localhost
+- `--secure` - serve a HTTP basic_auth secured directory at secure/static
+
 
 ## dserve go package
+Get: `go get github.com/peteretelej/dserve`
 
-Get the package: `package github.com/peteretelej/dserve/dserve`
-
-```
-go get github.com/peteretelej/dserve/dserve
-```
-
-Import into your code
-```
-import "github.com/peteretelej/dserve/dserve"
-```
-
-Launch the server with `dserve.Serve(directory,listenAddress)` where _directory_ is a string path to the folder to serve, and _listenAddress_ is the address to listen on.
-
-Example
+Usage Example: 
 ```
 package main
 
-import "github.com/peteretelej/dserve/dserve"
+import "github.com/peteretelej/dserve"
 
 func main() {
-	// Serving contents of current folder on port 80
-	dserve.Serve(".",":80")
+	// Serving contents of current folder on port 8011
+	dserve.Serve(".",":8011")
 }
 ```
+
 ## Secure directory
-The secure directory (served at secure) uses `http basic authentication`. Files are served from the `secure/static` directory onto `/secure/`
+The secure directory (served at secure if the `--secure` flag is used) uses __http basic authentication__. Files are served from the `secure/static` directory (relative to current directory `--dir`) and server on `/secure/`
 
-Files:
-	- secure/securepass.json.sample - a sample username and password
-	- secure/securepass.json - your username and password ( create this file )
+Configuration:
+A sample configuration file is the secure folder (`securepass.json.sample`). Copy the sample file and rename to `securepass.json` and edit the credentials as required.
+	- secure/securepass.json.sample - a sample username and password 
+	- secure/securepass.json - your username and password ( create this file , both username and password in plain text)
 
-Note: 
-	- Though the `secure/securepass.json` password is not served/ visible, it is stored in plaintext
-	- Dserve does not need to be restart to pick new credenctions
+Changing of the configuration file (e.g password) does not require restart to pick ne crendentials.
+
