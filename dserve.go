@@ -23,8 +23,8 @@ func Serve(listenAddr string, secureDir bool) error {
 	svr := &http.Server{
 		Addr:           listenAddr,
 		Handler:        mux,
-		ReadTimeout:    15 * time.Second,
-		WriteTimeout:   30 * time.Second,
+		ReadTimeout:    150 * time.Second,
+		WriteTimeout:   300 * time.Second,
 		MaxHeaderBytes: 1 << 20,
 	}
 	return svr.ListenAndServe()
