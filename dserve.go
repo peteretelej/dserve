@@ -7,7 +7,7 @@ import (
 )
 
 // Serve launches HTTP server serving on listenAddr and servers a basic_auth secured directory at secure/static
-func Serve(listenAddr string, secureDir bool) error {
+func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 	mux := http.NewServeMux()
 
 	fs := http.FileServer(http.Dir("."))
@@ -23,8 +23,8 @@ func Serve(listenAddr string, secureDir bool) error {
 	svr := &http.Server{
 		Addr:           listenAddr,
 		Handler:        mux,
-		ReadTimeout:    150 * time.Second,
-		WriteTimeout:   300 * time.Second,
+		ReadTimeout:    timeout,
+		WriteTimeout:   timeout * 2,
 		MaxHeaderBytes: 1 << 20,
 	}
 	return svr.ListenAndServe()

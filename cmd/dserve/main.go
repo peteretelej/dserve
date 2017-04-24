@@ -11,10 +11,11 @@ import (
 )
 
 var (
-	dir    = flag.String("dir", "./", "the directory to serve, defaults to current directory")
-	port   = flag.Int("port", 9011, "the port to serve at, defaults 9011")
-	local  = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
-	secure = flag.Bool("secure", false, "whether to create a basic_auth secured secure/ directory, default false")
+	dir     = flag.String("dir", "./", "the directory to serve, defaults to current directory")
+	port    = flag.Int("port", 9011, "the port to serve at, defaults 9011")
+	local   = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
+	secure  = flag.Bool("secure", false, "whether to create a basic_auth secured secure/ directory, default false")
+	timeout = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
 )
 
 func main() {
@@ -31,7 +32,7 @@ func main() {
 	listenAddr := fmt.Sprintf("%s:%d", addr, *port)
 
 	log.Printf("Launching dserve: serving %s on %s", *dir, listenAddr)
-	if err := dserve.Serve(listenAddr, *secure); err != nil {
+	if err := dserve.Serve(listenAddr, *secure, *timeout); err != nil {
 		handleFatal(err)
 		return
 	}
