@@ -80,7 +80,7 @@ func getCreds() (*AuthCreds, error) {
 		return creds, err
 	}
 	if creds.Username == "" && creds.Password == "" {
-		return creds, errors.New("No username and password in securepass.json.")
+		return creds, errors.New("no username and password in securepass.json")
 	}
 	return creds, nil
 }

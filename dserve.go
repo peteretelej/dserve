@@ -38,6 +38,5 @@ func handleSecure(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("WWW-Authenticate", `Basic realm="Dserve secure/ Basic Authentication"`)
-	w.WriteHeader(http.StatusUnauthorized)
-	w.Write([]byte("401 Unauthorized\n"))
+	http.Error(w, "Not Authorized", http.StatusUnauthorized)
 }
