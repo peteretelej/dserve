@@ -2,6 +2,8 @@
 
 # dserve - Directory Serve
 
+[![Join the chat at https://gitter.im/dserve-app/Lobby](https://badges.gitter.im/dserve-app/Lobby.svg)](https://gitter.im/dserve-app/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 __dserve__ serves a specified directory via HTTP on a specified listening address
 
 ## dserve CLI Installation Options
