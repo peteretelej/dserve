@@ -4,7 +4,7 @@
 
 [![Join the chat at https://gitter.im/dserve-app/Lobby](https://badges.gitter.im/dserve-app/Lobby.svg)](https://gitter.im/dserve-app/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-__dserve__ serves a specified directory via HTTP on a specified listening address
+__dserve__ serves a specified static directory via HTTP on a specified listening address
 
 ## dserve CLI Installation Options
 
@@ -45,6 +45,11 @@ serve current directory as well as a basic_auth secured directory secure/static
 ```
 dserve --secure
 ```
+
+specify a long server timeout duration (e.g. for large files)
+```
+dserve --dir ~/myProject -timeout 1h
+`
 
 
 - Specifying custom directory and listen address, on localhost
