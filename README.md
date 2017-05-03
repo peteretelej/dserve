@@ -49,13 +49,15 @@ dserve --secure
 specify a long server timeout duration (e.g. for large files)
 ```
 dserve --dir ~/myProject -timeout 1h
-`
+```
 
 
 - Specifying custom directory and listen address, on localhost
 ```
-dserve --dir /home/chief/mystaticwebsite --port 8011 --local
-# Note: serving on port 80 requires admin rights
+dserve -dir /home/username/mystaticwebsite -port 8011 -local
+
+# serving on port 80 requires elevated privileges
+sudo $(which dserve) -dir /home/username/mystaticwebsite -port 80
 ```
 
 `dserve --help` for cli usage help
