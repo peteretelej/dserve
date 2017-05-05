@@ -4,7 +4,7 @@
 
 __dserve__ serves a specified static directory on the web 
 
-## dserve Installation Installation Options
+## dserve Installation 
 
 #### Option 1 (Fast & Easy)
 Download Windows, Linux or Mac 32bit or 64bit executable application from the releases:
