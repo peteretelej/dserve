@@ -46,14 +46,14 @@ func main() {
 func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 	mux := http.NewServeMux()
 
-	fs := http.FileServer(http.Dir("."))
+	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
 
 	switch secureDir {
 	case true:
 		if err := authInit(); err != nil {
 			return fmt.Errorf("failed to initialize basic auth: %v", err)
 		}
-		mux.Handle("/", BASICAUTH(http.StripPrefix("/secure/", fs)))
+		mux.Handle("/", BASICAUTH(fs))
 	default:
 		mux.Handle("/", fs)
 	}
@@ -68,7 +68,7 @@ func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 	return svr.ListenAndServe()
 }
 
-// BASICAUTH is the basic auth handler
+// BASICAUTH is the basic auth middleware
 func BASICAUTH(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !validBasicAuth(r) {
@@ -76,7 +76,18 @@ func BASICAUTH(next http.Handler) http.Handler {
 			http.Error(w, "Not Authorized", http.StatusUnauthorized)
 			return
 		}
-		return next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
+	})
+}
+
+// hideRootDotfiles middleware hides any dotfiles in the root of the directory being served
+func hideRootDotfiles(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/.") {
+			http.Error(w, "access to dotfiles in root directory is forbidden 😞", http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r)
 	})
 }
 
