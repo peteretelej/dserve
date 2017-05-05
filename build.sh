@@ -1,34 +1,36 @@
 #!/bin/bash
 set -e
 
-cd ../../
-
 go vet ./...
 
-cd cmd/dserve 
-
-rm -rf releases/*
+rm -rf dist/*
 
 # windows and linux x64
 echo "Building Linuxamd64, Windowsx64"
-GOOS=linux go build -o releases/dserve main.go && \
-GOOS=windows go build -o releases/dserve.exe main.go && \
-zip -r releases/dserve_for_windowsx64.zip releases/dserve.exe && \
-tar -cvzf releases/dserve_for_linux_amd64.tar.gz releases/dserve && \
-rm releases/dserve{,.exe}
+GOOS=linux CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "static"'  -o dist/dserve main.go && \
+GOOS=windows CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "static"'  -o dist/dserve.exe main.go
+cd dist/
+zip -r dserve_for_windowsx64.zip dserve.exe && \
+tar -cvzf dserve_for_linux_amd64.tar.gz dserve && \
+rm dserve{,.exe}
 
+cd ../
 # Windows 32bit
 echo "Building Windows, Linux 32 bit"
-GOARCH=386 GOOS=linux go build -o releases/dserve main.go && \
-GOARCH=386 GOOS=windows go build -o releases/dserve.exe main.go && \
-zip -r releases/dserve_for_windows.zip releases/dserve.exe && \
-tar -cvzf releases/dserve_for_linux.tar.gz releases/dserve && \
-rm releases/dserve{,.exe}
+GOARCH=386 GOOS=linux CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "static"'  -o dist/dserve main.go && \
+GOARCH=386 GOOS=windows CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "static"'  -o dist/dserve.exe main.go && \
+cd dist/
+zip -r dserve_for_windows.zip dserve.exe && \
+tar -cvzf dserve_for_linux.tar.gz dserve && \
+rm dserve{,.exe}
 
+cd ../
 # Mac, iOS 386 (darwin/386)
 echo "Building for Mac"
-GOARCH=386 GOOS=darwin go build -o releases/dserve main.go && \
-zip -r releases/dserve_for_mac.zip releases/dserve && \
-rm releases/dserve
+GOARCH=386 GOOS=darwin CGO_ENABLED=0 go build -ldflags '-s -w -extldflags "static"'  -o dist/dserve main.go && \
+cd dist/
+zip -r dserve_for_mac.zip dserve && \
+rm dserve
 
-echo "BUILDS completed. ================="
+cd ../
+echo "================= Releases DONE, see dist/."
