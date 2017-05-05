@@ -2,94 +2,51 @@
 
 # dserve - Directory Serve
 
-[![Join the chat at https://gitter.im/dserve-app/Lobby](https://badges.gitter.im/dserve-app/Lobby.svg)](https://gitter.im/dserve-app/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+__dserve__ serves a specified static directory on the web 
 
-__dserve__ serves a specified static directory via HTTP on a specified listening address
+## dserve Installation Installation Options
 
-## dserve CLI Installation Options
+#### Option 1 (Fast & Easy)
+Download Windows, Linux or Mac 32bit or 64bit executable application from the releases:
 
-Option 1. Download Windows or Linux executable application from dserve Github **[releases page](https://github.com/peteretelej/dserve/releases)**
+   - **[Download dserve](https://github.com/peteretelej/dserve/releases)**
 
-Option 2. Install via `go get`. (Requires Golang)
+#### Option 2
+Install via `go get`. (Requires Golang)
 
 ```
 go get github.com/peteretelej/dserve
 ```
 
 ### Usage
+```
+dserve serves a static directory over http
 
-Run `dserve` command while in the directory to serve. Serves the current working directory on ":9011", accessible on browsers e.g via http://localhost:9011
+Usage:
+        dserve
+        dserve [flags].. [directory]
 
-```
-cd ~/myProject
-dserve
-```
+Examples:
+        dserve                  Serves the current directory over http at :9011
+        dserve -local           Serves the current directory on localhost:9011
+        dserve -dir ~/dir       Serves the directory ~/dir over http 
+        dserve -secure          Serves the current directory with basicauth using sample .basicauth.json
+        dserve -secure -basicauth myauth.json
+                                Serves the current directory with basicauth using config file myauth.json
 
-
-serve a directory
-```
-dserve --dir ~/myProject
-``` 
-
-serve current directory on a specific address
-```
-dserve --port 8011
-```
-
-serve current directory on localhost
-```
-dserve --local
-```
-
-serve current directory as well as a basic_auth secured directory secure/static
-```
-dserve --secure
-```
-
-specify a long server timeout duration (e.g. for large files)
-```
-dserve --dir ~/myProject -timeout 1h
+Flags:
+  -basicauth string
+        file to be used for basicauth json config (default ".basicauth.json")
+  -dir string
+        the directory to serve, defaults to current directory (default "./")
+  -local
+        whether to serve on all address or on localhost, default all addresses
+  -port int
+        the port to serve at, defaults 9011 (default 9011)
+  -secure
+        whether to create a basic_auth secured secure/ directory, default false
+  -timeout duration
+        http server read timeout, write timeout will be double this (default 3m0s)
 ```
 
-
-- Specifying custom directory and listen address, on localhost
-```
-dserve -dir /home/username/mystaticwebsite -port 8011 -local
-
-# serving on port 80 requires elevated privileges
-sudo $(which dserve) -dir /home/username/mystaticwebsite -port 80
-```
-
-`dserve --help` for cli usage help
-
-- `--port` - custom port to listen on, default is 9011
-- `--dir` - custom directory to serve, default is the directory dserve is run from
-- `--local` - only serve on localhost
-- `--secure` - serve a HTTP basic_auth secured directory at secure/static
-
-
-## dserve go package
-Get: `go get github.com/peteretelej/dserve`
-
-Usage Example: 
-```
-package main
-
-import "github.com/peteretelej/dserve"
-
-func main() {
-	// Serving contents of current folder on port 8011
-	dserve.Serve(".",":8011")
-}
-```
-
-## Secure directory
-The secure directory (served at secure if the `--secure` flag is used) uses __http basic authentication__. Files are served from the `secure/static` directory (relative to current directory `--dir`) and server on `/secure/`
-
-Configuration:
-A sample configuration file is the secure folder (`securepass.json.sample`). Copy the sample file and rename to `securepass.json` and edit the credentials as required.
-	- secure/securepass.json.sample - a sample username and password 
-	- secure/securepass.json - your username and password ( create this file , both username and password in plain text)
-
-Changing of the configuration file (e.g password) does not require restart to pick ne crendentials.
 

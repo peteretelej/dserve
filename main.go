@@ -22,7 +22,29 @@ var (
 	timeout   = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
 )
 
+var usage = func() {
+	fmt.Fprintf(os.Stderr, `dserve serves a static directory over http
+
+Usage:
+	dserve
+	dserve [flags].. [directory]
+
+Examples:
+	dserve 			Serves the current directory over http at :9011
+	dserve -local		Serves the current directory on localhost:9011
+	dserve -dir ~/dir	Serves the directory ~/dir over http 
+	dserve -secure		Serves the current directory with basicauth using sample .basicauth.json
+	dserve -secure -basicauth myauth.json
+				Serves the current directory with basicauth using config file myauth.json
+
+Flags:
+`)
+	flag.PrintDefaults()
+	os.Exit(2)
+}
+
 func main() {
+	flag.Usage = usage
 	flag.Parse()
 	log.SetPrefix("dserve: ")
 	if err := os.Chdir(*dir); err != nil {
@@ -58,6 +80,7 @@ func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 		if err := authInit(); err != nil {
 			return fmt.Errorf("failed to initialize basic auth: %v", err)
 		}
+		fmt.Printf("BasicAuth enabled using credentials in %s\n", *basicauth)
 		mux.Handle("/", BASICAUTH(fs))
 	default:
 		mux.Handle("/", fs)
@@ -119,10 +142,9 @@ func authInit() error {
 			log.Print(err)
 			return fmt.Errorf("internal error")
 		}
-		if err := ioutil.WriteFile(fmt.Sprintf("%s.sample", *basicauth), d, 0644); err != nil {
+		if err := ioutil.WriteFile(fmt.Sprintf("%s", *basicauth), d, 0644); err != nil {
 			return fmt.Errorf("unable to create sample file %s", *basicauth)
 		}
-		return fmt.Errorf("%s missing", *basicauth)
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
 dserve
-.basicauth.json*
+.basicauth.json
 dist/
 
