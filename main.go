@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -15,14 +14,13 @@ import (
 )
 
 var (
-	dir     = flag.String("dir", "./", "the directory to serve, defaults to current directory")
-	port    = flag.Int("port", 9011, "the port to serve at, defaults 9011")
-	local   = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
-	secure  = flag.Bool("secure", false, "whether to create a basic_auth secured secure/ directory, default false")
-	timeout = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
+	dir       = flag.String("dir", "./", "the directory to serve, defaults to current directory")
+	port      = flag.Int("port", 9011, "the port to serve at, defaults 9011")
+	local     = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
+	secure    = flag.Bool("secure", false, "whether to create a basic_auth secured secure/ directory, default false")
+	basicauth = flag.String("basicauth", ".basicauth.json", "file to be used for basicauth json config")
+	timeout   = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
 )
-
-const securedir = "secure/static"
 
 func main() {
 	flag.Parse()
@@ -34,9 +32,16 @@ func main() {
 	if *local {
 		addr = "localhost"
 	}
+	if *secure {
+		if err := authInit(); err != nil {
+			fmt.Printf("Basic Auth credentials %s missing: edit and rename %s.sample\n",
+				*basicauth, *basicauth)
+			os.Exit(1)
+		}
+	}
 
 	listenAddr := fmt.Sprintf("%s:%d", addr, *port)
-	fmt.Printf("Launching dserve: serving %s on %s\n", *dir, listenAddr)
+	fmt.Printf("Launching dserve http server %s on %s\n", *dir, listenAddr)
 	if err := Serve(listenAddr, *secure, *timeout); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
@@ -72,7 +77,7 @@ func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 func BASICAUTH(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !validBasicAuth(r) {
-			w.Header().Set("WWW-Authenticate", `Basic realm="Dserve secure/ Basic Authentication"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="dserve Basic Authentication"`)
 			http.Error(w, "Not Authorized", http.StatusUnauthorized)
 			return
 		}
@@ -91,7 +96,7 @@ func hideRootDotfiles(next http.Handler) http.Handler {
 	})
 }
 
-// AuthCreds defines the http basic authentication credentials for /secure
+// AuthCreds defines the http basic authentication credentials
 // Note: Though the password is not served, it is stored in plaintext
 type AuthCreds struct {
 	invalid  string
@@ -101,12 +106,6 @@ type AuthCreds struct {
 
 // authInit initializes the secure directory
 func authInit() error {
-	if _, err := os.Stat(securedir); err != nil {
-		err := os.MkdirAll(securedir, 0700)
-		if err != nil {
-			return err
-		}
-	}
 	// get creds
 	err := func() error {
 		// Read the securepass.json creds
@@ -114,18 +113,21 @@ func authInit() error {
 		return err
 	}()
 	if err != nil {
-		// create sample securepass.json example
 		sample := &AuthCreds{Username: "example", Password: "pass123"}
 		d, err := json.MarshalIndent(sample, "", "	")
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Print(err)
+			return fmt.Errorf("internal error")
 		}
-		return ioutil.WriteFile("secure/securepass.json.sample", d, 0644)
+		if err := ioutil.WriteFile(fmt.Sprintf("%s.sample", *basicauth), d, 0644); err != nil {
+			return fmt.Errorf("unable to create sample file %s", *basicauth)
+		}
+		return fmt.Errorf("%s missing", *basicauth)
 	}
 	return nil
 }
 
-// validBasicAuth checks the authentication credentials to access /secure files
+// validBasicAuth checks the basicauth authentication credentials
 func validBasicAuth(r *http.Request) bool {
 	creds, err := getCreds()
 	if err != nil {
@@ -149,7 +151,7 @@ func validBasicAuth(r *http.Request) bool {
 // getCreds gets the current http basic credentials
 func getCreds() (*AuthCreds, error) {
 	creds := &AuthCreds{}
-	sp, err := ioutil.ReadFile("/secure/securepass.json")
+	sp, err := ioutil.ReadFile(*basicauth)
 	if err != nil {
 		return creds, err
 	}
@@ -158,7 +160,7 @@ func getCreds() (*AuthCreds, error) {
 		return creds, err
 	}
 	if creds.Username == "" && creds.Password == "" {
-		return creds, errors.New("no username and password in securepass.json")
+		return creds, fmt.Errorf("no username and password in %s", *basicauth)
 	}
 	return creds, nil
 }

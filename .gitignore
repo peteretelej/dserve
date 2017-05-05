@@ -1,3 +1,4 @@
 dserve
+.basicauth.json*
 dist/
 
