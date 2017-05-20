@@ -23,7 +23,7 @@ var (
 )
 
 var usage = func() {
-	fmt.Fprintf(os.Stderr, `dserve serves a static directory over http
+	fmt.Fprint(os.Stderr, `dserve serves a static directory over http
 
 Usage:
 	dserve
@@ -122,7 +122,6 @@ func hideRootDotfiles(next http.Handler) http.Handler {
 // AuthCreds defines the http basic authentication credentials
 // Note: Though the password is not served, it is stored in plaintext
 type AuthCreds struct {
-	invalid  string
 	Username string `json:"username"`
 	Password string `json:"password"`
 }

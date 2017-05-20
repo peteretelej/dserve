@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-var fakeFSHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("fs")) })
+var fakeFSHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "fs") })
 
 func TestValidBasicAuth(t *testing.T) {
 	username, password := "tester", "pass123"
