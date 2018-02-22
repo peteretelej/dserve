@@ -91,6 +91,7 @@ func Serve(listenAddr string, secureDir bool, timeout time.Duration) error {
 		Handler:        mux,
 		ReadTimeout:    timeout,
 		WriteTimeout:   timeout * 2,
+		IdleTimeout:    timeout * 10,
 		MaxHeaderBytes: 1 << 20,
 	}
 	return svr.ListenAndServe()
