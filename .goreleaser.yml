@@ -1,0 +1,28 @@
+env_files:
+  github_token: .github_token
+builds:
+  - binary: dserve
+    goos:
+      - freebsd
+      - windows
+      - darwin
+      - linux
+    env:
+      - CGO_ENABLED=0
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+# Archive customization
+archive:
+   name_template: "{{.Binary}}_{{.Version}}_{{.Os}}_{{.Arch}}"
+   format_overrides:
+      - goos: windows
+        format: zip
+   replacements:
+      386: 32bit
+      amd64: x64
+      darwin: maxOS
+   files:
+      - README.md
