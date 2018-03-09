@@ -11,15 +11,32 @@ import (
 var fakeFSHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { fmt.Fprint(w, "fs") })
 
 func TestValidBasicAuth(t *testing.T) {
-	username, password := "tester", "pass123"
-	req, err := http.NewRequest("GET", "/", nil)
-	if err != nil {
-		t.Fatal(err)
+	creds = &AuthCreds{
+		Username: "test",
+		Password: "want12345",
 	}
-	req.Header.Set("Authorization",
-		fmt.Sprintf("%s %s", username, base64.StdEncoding.EncodeToString([]byte(password))))
-	if valid := validBasicAuth(req); valid {
-		t.Errorf("validbasicauth got %v want %v", valid, false)
+	var tests = []struct {
+		username string
+		password string
+		valid    bool
+	}{
+		{"tester", "abc", false},
+		{"test", "want12345", true},
+	}
+	for _, test := range tests {
+		req, err := http.NewRequest("GET", "/", nil)
+		if err != nil {
+			t.Errorf("failed to create request: %v", err)
+			continue
+		}
+		auth := []byte(test.username + ":" + test.password)
+		req.Header.Set("Authorization",
+			fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString(auth)))
+
+		valid := validBasicAuth(req)
+		if test.valid != valid {
+			t.Errorf("expected valid %t, got %t", test.valid, valid)
+		}
 	}
 
 }

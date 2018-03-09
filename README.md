@@ -30,23 +30,21 @@ Examples:
         dserve                  Serves the current directory over http at :9011
         dserve -local           Serves the current directory on localhost:9011
         dserve -dir ~/dir       Serves the directory ~/dir over http 
-        dserve -secure          Serves the current directory with basicauth using sample .basicauth.json
-        dserve -secure -basicauth myauth.json
-                                Serves the current directory with basicauth using config file myauth.json
+        dserve -basic "guest:Pass1234"
+		 Serves the current directory with basicauth (only use this over  https)
 
 Flags:
-  -basicauth string
-        file to be used for basicauth json config (default ".basicauth.json")
   -dir string
         the directory to serve, defaults to current directory (default "./")
-  -local
-        whether to serve on all address or on localhost, default all addresses
+  -local bool
+	whether to only serve on localhost
   -port int
         the port to serve at, defaults 9011 (default 9011)
-  -secure
-        whether to create a basic_auth secured secure/ directory, default false
   -timeout duration
         http server read timeout, write timeout will be double this (default 3m0s)
+  -basicauth string
+	enable HTTP basic authentication, arguments should be USERNAME:PASSWORD 
+	example: dserve -basicauth "admin:passw0rd"
 ```
 
 

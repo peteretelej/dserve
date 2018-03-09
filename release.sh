@@ -1,13 +1,8 @@
 #!/bin/bash
-set -e
+set -e 
 
+# confirm goreleaser exists
 goreleaser --help 2>&1 >/dev/null
-if [ $? -gt 0 ]
-then
-	echo "FAILED: goreleaser binary not in path, you should:"
-	echo -e "\tgo get -u github.com/goreleaser/goreleaser"
-	exit 1
-fi
 
 go vet ./...
 
