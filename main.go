@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -14,34 +15,12 @@ var (
 	dir       = flag.String("dir", "./", "the directory to serve, defaults to current directory")
 	port      = flag.Int("port", 9011, "the port to serve at, defaults 9011")
 	local     = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
-	basicauth = flag.String("basicauth", "", "enable basic authentication")
+	basicauth = flag.String("basicauth", "", "basicauth creds, enables basic authentication")
 	timeout   = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
 )
 
-var usage = func() {
-	fmt.Fprint(os.Stderr, `dserve serves a static directory over http
-
-Usage:
-	dserve
-	dserve [flags]..
-
-Examples:
-	dserve 			Serves the current directory over http at :9011
-	dserve -local		Serves the current directory on localhost:9011
-	dserve -dir ~/dir	Serves the directory ~/dir over http 
-	dserve -basicauth admin:Passw0rd
-				Serves the current directory with basicauth using config file myauth.json
-
-Flags:
-`)
-	flag.PrintDefaults()
-	os.Exit(2)
-}
-
 func main() {
-	flag.Usage = usage
 	flag.Parse()
-
 	log.SetPrefix("dserve: ")
 
 	if err := os.Chdir(*dir); err != nil {
@@ -52,7 +31,7 @@ func main() {
 		addr = "localhost"
 	}
 	if err := authInit(*basicauth); err != nil {
-		fmt.Print("invalid basicauth flag value: value should be USERNAME:PASSWORD, e.g. dserve -basicauth admin:passw0rd")
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -124,8 +103,8 @@ func authInit(bAuth string) error {
 		return nil
 	}
 	i := strings.Index(bAuth, ":")
-	if i < 3 && i < len(bAuth)-1 {
-		return fmt.Errorf("invalid basicauth flag value")
+	if i < 3 || i < len(bAuth)-1 {
+		return errors.New("invalid basicauth flag value: value should be USERNAME:PASSWORD, e.g. dserve -basicauth admin:passw0rd")
 	}
 	creds = &AuthCreds{
 		Username: bAuth[:i],
