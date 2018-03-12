@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/peteretelej/dserve)](http://goreportcard.com/report/peteretelej/dserve)
 [![license](https://img.shields.io/github/license/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/blob/master/LICENSE.md)
 
-__dserve__ serves a specified static directory on the web 
+__dserve__ serve a directory over HTTP
 
 ## dserve Installation 
 
@@ -22,32 +22,35 @@ go get github.com/peteretelej/dserve
 ```
 
 ### Usage
+Enter the directory you'd like to serve and run
 ```
-dserve serves a static directory over http
-
-Usage:
-        dserve
-        dserve [flags].. [directory]
-
-Examples:
-        dserve                  Serves the current directory over http at :9011
-        dserve -local           Serves the current directory on localhost:9011
-        dserve -dir ~/dir       Serves the directory ~/dir over http 
-        dserve -basic "guest:Pass1234"
-		 Serves the current directory with basicauth (only use this over  https)
-
-Flags:
-  -dir string
-        the directory to serve, defaults to current directory (default "./")
-  -local bool
-	whether to only serve on localhost
-  -port int
-        the port to serve at, defaults 9011 (default 9011)
-  -timeout duration
-        http server read timeout, write timeout will be double this (default 3m0s)
-  -basicauth string
-	enable HTTP basic authentication, arguments should be USERNAME:PASSWORD 
-	example: dserve -basicauth "admin:passw0rd"
+dserve
 ```
 
+That's it. This launches a webserver on port 9011 serving the directory. Visit [http:localhost:9011](http://localhost:9011) to access the site.
+
+Speficy a directory in another location
+```
+dserve -dir /var/www/html
+```
+
+Serve on a different port
+```
+dserve -port 8080
+```
+
+Enable basic authentication
+```
+dserve -basicauth user1:pass123
+```
+
+Restrict server to localhost
+```
+dserve -local
+```
+
+You can chain the arguments
+```
+dserve -dir ~/mysite -port 80 -basicauth user:pass12345
+```
 
