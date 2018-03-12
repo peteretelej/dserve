@@ -2,9 +2,8 @@
 
 [![Build Status](https://travis-ci.org/peteretelej/dserve.svg?branch=master)](https://travis-ci.org/peteretelej/dserve)
 [![GitHub release](https://img.shields.io/github/release/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/releases)
-[![Coverage Status](https://coveralls.io/repos/github/peteretelej/dserve/badge.svg?branch=master)](https://coveralls.io/github/peteretelej/dserve?branch=master)
 [![Go Report Card](https://goreportcard.com/badge/peteretelej/dserve)](http://goreportcard.com/report/peteretelej/dserve)
-[![license](https://img.shields.io/github/license/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/blob/master/LICENSE.md) [![]
+[![license](https://img.shields.io/github/license/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/blob/master/LICENSE.md)
 
 __dserve__ serves a specified static directory on the web 
 
