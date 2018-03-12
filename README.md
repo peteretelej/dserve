@@ -27,7 +27,7 @@ Enter the directory you'd like to serve and run
 dserve
 ```
 
-That's it. This launches a webserver on port 9011 serving the directory. Visit [http:localhost:9011](http://localhost:9011) to access the site.
+That's it. This launches a webserver on port 9011 serving the directory. Visit [http://localhost:9011](http://localhost:9011) to access the site.
 
 Speficy a directory in another location
 ```
@@ -39,7 +39,7 @@ Serve on a different port
 dserve -port 8080
 ```
 
-Enable basic authentication
+Enable HTTP basic authentication
 ```
 dserve -basicauth user1:pass123
 ```
