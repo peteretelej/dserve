@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -68,7 +69,8 @@ func TestSSEEndpoint(t *testing.T) {
 	}
 	defer lr.Close()
 
-	req := httptest.NewRequest(http.MethodGet, "/__livereload", nil)
+	ctx, cancel := context.WithCancel(context.Background())
+	req := httptest.NewRequest(http.MethodGet, "/__livereload", nil).WithContext(ctx)
 	rec := httptest.NewRecorder()
 
 	done := make(chan struct{})
@@ -80,6 +82,10 @@ func TestSSEEndpoint(t *testing.T) {
 	time.Sleep(50 * time.Millisecond)
 	lr.Notify()
 	time.Sleep(50 * time.Millisecond)
+
+	// Cancel context and wait for handler to finish before reading buffer
+	cancel()
+	<-done
 
 	result := rec.Body.String()
 	if !strings.Contains(result, "data: reload") {

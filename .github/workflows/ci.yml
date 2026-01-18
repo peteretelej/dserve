@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   test:
@@ -25,4 +25,4 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test -v ./...
+        run: go test -v -race ./...

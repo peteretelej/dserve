@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"os"
@@ -15,7 +16,10 @@ import (
 )
 
 var configDir = func() string {
-	dir, _ := os.UserConfigDir()
+	dir, err := os.UserConfigDir()
+	if err != nil || dir == "" {
+		return filepath.Join(".", ".dserve")
+	}
 	return filepath.Join(dir, "dserve")
 }
 
@@ -55,7 +59,10 @@ func generateSelfSignedCert() ([]byte, []byte, error) {
 		return nil, nil, err
 	}
 
-	serialNumber, _ := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	serialNumber, err := rand.Int(rand.Reader, new(big.Int).Lsh(big.NewInt(1), 128))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate serial number: %w", err)
+	}
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,

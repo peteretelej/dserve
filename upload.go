@@ -56,7 +56,11 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 		targetDir := destDir
 		if subdir != "" {
 			targetDir = filepath.Join(destDir, subdir)
-			os.MkdirAll(targetDir, 0755)
+			if err := os.MkdirAll(targetDir, 0755); err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				json.NewEncoder(w).Encode(uploadResponse{Error: "failed to create directory"})
+				return
+			}
 		}
 
 		destPath := uniqueFilename(targetDir, filename)

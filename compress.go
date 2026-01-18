@@ -76,13 +76,14 @@ func gzipMiddleware(next http.Handler) http.Handler {
 
 		gz := gzipWriterPool.Get().(*gzip.Writer)
 		gz.Reset(w)
-		defer func() {
-			gz.Close()
-			gzipWriterPool.Put(gz)
-		}()
 
 		gzw := &gzipResponseWriter{ResponseWriter: w, gw: gz}
 		next.ServeHTTP(gzw, r)
+
+		if !gzw.skipGzip {
+			gz.Close()
+		}
+		gzipWriterPool.Put(gz)
 	})
 }
 

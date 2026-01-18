@@ -3,8 +3,10 @@ package main
 import (
 	"archive/zip"
 	"io"
+	"log"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -16,8 +18,10 @@ func zipHandler(rootDir string) http.Handler {
 			reqPath = "/"
 		}
 
-		reqPath = filepath.Clean(reqPath)
-		fullPath := filepath.Join(rootDir, reqPath)
+		// Normalize URL path to prevent directory traversal
+		cleanURLPath := path.Clean("/" + reqPath)
+		relPath := strings.TrimPrefix(cleanURLPath, "/")
+		fullPath := filepath.Join(rootDir, filepath.FromSlash(relPath))
 
 		absRoot, err := filepath.Abs(rootDir)
 		if err != nil {
@@ -30,7 +34,9 @@ func zipHandler(rootDir string) http.Handler {
 			return
 		}
 
-		if !strings.HasPrefix(absPath, absRoot) {
+		// Validate path is within root using filepath.Rel
+		rel, err := filepath.Rel(absRoot, absPath)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(os.PathSeparator)) {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
@@ -57,6 +63,8 @@ func zipHandler(rootDir string) http.Handler {
 		w.Header().Set("Content-Disposition", `attachment; filename="`+dirName+`.zip"`)
 
 		if err := zipDirectory(w, absPath, absRoot); err != nil {
+			// Headers already sent, can't change status. Log for debugging.
+			log.Printf("zip write error for %s: %v", absPath, err)
 			return
 		}
 	})
@@ -109,7 +117,9 @@ func zipDirectory(w io.Writer, dir string, root string) error {
 		}
 		defer file.Close()
 
-		io.Copy(writer, file)
+		if _, err := io.Copy(writer, file); err != nil {
+			return err
+		}
 		return nil
 	})
 }
