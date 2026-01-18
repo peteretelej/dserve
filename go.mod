@@ -1,4 +1,4 @@
-module github.com/peteretelej/dserve
+module github.com/peteretelej/dserve/v3
 
 go 1.24
 

@@ -13,7 +13,7 @@ Download the latest release for Windows, macOS, Linux, or other platforms from [
 
 Or with Go:
 ```bash
-go install github.com/peteretelej/dserve@latest
+go install github.com/peteretelej/dserve/v3@latest
 ```
 
 ## Quick Start
