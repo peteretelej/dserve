@@ -102,7 +102,11 @@ func main() {
 	if cfg.TLS != nil {
 		protocol = "https"
 	}
-	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, cfg.Addr)
+	displayAddr := cfg.Addr
+	if displayAddr[0] == ':' {
+		displayAddr = "localhost" + displayAddr
+	}
+	fmt.Printf("Serving %s at %s://%s\n", *dir, protocol, displayAddr)
 	if cfg.LiveReload != nil {
 		fmt.Printf("Live reload enabled, watching: %s\n", *live)
 	}

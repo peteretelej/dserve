@@ -27,7 +27,7 @@
     input[type="search"]:focus { outline: 2px solid var(--link); outline-offset: -1px; }
     table { width: 100%; border-collapse: collapse; }
     th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-    th { cursor: pointer; user-select: none; font-weight: 600; }
+    th { cursor: pointer; -webkit-user-select: none; user-select: none; font-weight: 600; }
     th:hover { background: var(--hover); }
     th.sorted::after { content: ' \25b2'; font-size: 0.7em; }
     th.sorted.desc::after { content: ' \25bc'; }
@@ -52,6 +52,7 @@
     .preview-close { position: absolute; top: 1rem; right: 1.5rem; font-size: 2.5rem; color: white; cursor: pointer; line-height: 1; }
     .preview-close:hover { color: #ccc; }
     .empty { text-align: center; padding: 3rem; color: var(--muted); }
+    .hidden { display: none; }
     @media (max-width: 600px) {
       .date { display: none; }
       header { flex-direction: column; align-items: flex-start; }
@@ -67,7 +68,7 @@
       <div class="controls">
         <input type="search" id="filter" placeholder="Filter files...">
         <button id="theme-toggle">Theme</button>
-        <button id="zip-btn" style="display:none">Download Zip</button>
+        <button id="zip-btn" class="hidden">Download Zip</button>
       </div>
     </header>
 
@@ -87,7 +88,7 @@
       <tbody id="file-list"></tbody>
     </table>
 
-    <div id="empty-msg" class="empty" style="display:none">No files found</div>
+    <div id="empty-msg" class="empty hidden">No files found</div>
   </div>
 
   <div class="preview-modal" id="preview-modal">
@@ -184,10 +185,10 @@
 
       if (sorted.length === 0) {
         list.innerHTML = '';
-        emptyMsg.style.display = 'block';
+        emptyMsg.classList.remove('hidden');
         return;
       }
-      emptyMsg.style.display = 'none';
+      emptyMsg.classList.add('hidden');
 
       list.innerHTML = sorted.map(f => {
         const href = D.path + encodeURIComponent(f.name) + (f.isDir ? '/' : '');
@@ -234,7 +235,7 @@
     // Zip download
     if (D.zipEnabled) {
       const btn = document.getElementById('zip-btn');
-      btn.style.display = 'inline-block';
+      btn.classList.remove('hidden');
       btn.onclick = () => { location.href = '/__zip?path=' + encodeURIComponent(D.path); };
     }
 
