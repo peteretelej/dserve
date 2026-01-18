@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>dserve</title>
+  <!-- DSERVE_DATA_PLACEHOLDER -->
+  <style>
+    :root {
+      --bg: #fff; --fg: #333; --border: #ddd; --hover: #f5f5f5;
+      --link: #0066cc; --muted: #888;
+    }
+    [data-theme="dark"] {
+      --bg: #1a1a1a; --fg: #eee; --border: #333; --hover: #2a2a2a;
+      --link: #66b3ff; --muted: #999;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--fg); }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1rem; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem; }
+    .breadcrumb { display: flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; }
+    .breadcrumb a { color: var(--link); text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb span { color: var(--muted); }
+    .controls { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    input[type="search"] { padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); min-width: 200px; }
+    input[type="search"]:focus { outline: 2px solid var(--link); outline-offset: -1px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+    th { cursor: pointer; user-select: none; font-weight: 600; }
+    th:hover { background: var(--hover); }
+    th.sorted::after { content: ' \25b2'; font-size: 0.7em; }
+    th.sorted.desc::after { content: ' \25bc'; }
+    tr:hover { background: var(--hover); }
+    .icon { width: 2rem; text-align: center; font-size: 1.1rem; }
+    .size, .date { color: var(--muted); font-size: 0.9rem; white-space: nowrap; }
+    a { color: inherit; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .name-link { color: var(--link); }
+    .upload-zone { border: 2px dashed var(--border); border-radius: 8px; padding: 2rem; text-align: center; margin: 1rem 0; display: none; transition: all 0.2s; }
+    .upload-zone.active { border-color: var(--link); background: rgba(0,102,204,0.1); }
+    .upload-zone.enabled { display: block; }
+    .upload-zone p { color: var(--muted); }
+    button { padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); color: var(--fg); cursor: pointer; font-size: 0.9rem; }
+    button:hover { background: var(--hover); }
+    .preview-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .preview-modal.active { display: flex; }
+    .preview-content { max-width: 90vw; max-height: 90vh; background: var(--bg); padding: 1rem; border-radius: 8px; overflow: auto; }
+    .preview-content img, .preview-content video { max-width: 100%; height: auto; display: block; }
+    .preview-content pre { white-space: pre-wrap; word-break: break-word; max-width: 80vw; font-family: ui-monospace, monospace; font-size: 0.9rem; line-height: 1.5; }
+    .preview-content iframe { border: none; }
+    .preview-close { position: absolute; top: 1rem; right: 1.5rem; font-size: 2.5rem; color: white; cursor: pointer; line-height: 1; }
+    .preview-close:hover { color: #ccc; }
+    .empty { text-align: center; padding: 3rem; color: var(--muted); }
+    @media (max-width: 600px) {
+      .date { display: none; }
+      header { flex-direction: column; align-items: flex-start; }
+      .controls { width: 100%; }
+      input[type="search"] { flex: 1; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <nav class="breadcrumb" id="breadcrumb"></nav>
+      <div class="controls">
+        <input type="search" id="filter" placeholder="Filter files...">
+        <button id="theme-toggle">Theme</button>
+        <button id="zip-btn" style="display:none">Download Zip</button>
+      </div>
+    </header>
+
+    <div class="upload-zone" id="upload-zone">
+      <p>Drop files here to upload</p>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th class="icon"></th>
+          <th data-sort="name">Name</th>
+          <th data-sort="size">Size</th>
+          <th data-sort="modified">Modified</th>
+        </tr>
+      </thead>
+      <tbody id="file-list"></tbody>
+    </table>
+
+    <div id="empty-msg" class="empty" style="display:none">No files found</div>
+  </div>
+
+  <div class="preview-modal" id="preview-modal">
+    <span class="preview-close" id="preview-close">&times;</span>
+    <div class="preview-content" id="preview-content"></div>
+  </div>
+
+  <script>
+    const D = window.DSERVE || { files: [], path: '/', uploadEnabled: false, zipEnabled: false };
+
+    // Theme
+    const savedTheme = localStorage.getItem('dserve-theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = savedTheme || (prefersDark ? 'dark' : 'light');
+    document.documentElement.dataset.theme = theme;
+    document.getElementById('theme-toggle').onclick = () => {
+      const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+      document.documentElement.dataset.theme = t;
+      localStorage.setItem('dserve-theme', t);
+    };
+
+    // Breadcrumb
+    const bc = document.getElementById('breadcrumb');
+    const parts = D.path.split('/').filter(Boolean);
+    let href = '/';
+    bc.innerHTML = '<a href="/">dserve</a>';
+    parts.forEach((p, i) => {
+      href += encodeURIComponent(p) + '/';
+      bc.innerHTML += '<span>/</span><a href="' + href + '">' + escapeHtml(p) + '</a>';
+    });
+
+    // File icons
+    const icons = {
+      dir: '\uD83D\uDCC1', img: '\uD83D\uDDBC\uFE0F', vid: '\uD83C\uDFAC', audio: '\uD83C\uDFB5',
+      pdf: '\uD83D\uDCC4', code: '\uD83D\uDCDD', archive: '\uD83D\uDCE6', default: '\uD83D\uDCC4'
+    };
+    function getIcon(f) {
+      if (f.isDir) return icons.dir;
+      const ext = (f.name.split('.').pop() || '').toLowerCase();
+      if (['jpg','jpeg','png','gif','svg','webp','ico','bmp'].includes(ext)) return icons.img;
+      if (['mp4','webm','mov','avi','mkv','m4v'].includes(ext)) return icons.vid;
+      if (['mp3','wav','ogg','flac','m4a','aac'].includes(ext)) return icons.audio;
+      if (ext === 'pdf') return icons.pdf;
+      if (['zip','tar','gz','rar','7z','bz2'].includes(ext)) return icons.archive;
+      if (['js','ts','go','py','html','css','json','md','yaml','yml','xml','sh','bash','rb','rs','c','cpp','h','java','kt','swift'].includes(ext)) return icons.code;
+      return icons.default;
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '-';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    function formatDate(d) {
+      const date = new Date(d);
+      return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    let files = D.files || [];
+    let sortCol = 'name', sortDir = 1;
+
+    function render() {
+      const filter = document.getElementById('filter').value.toLowerCase();
+      const list = document.getElementById('file-list');
+      const emptyMsg = document.getElementById('empty-msg');
+
+      const sorted = [...files]
+        .filter(f => f.name.toLowerCase().includes(filter))
+        .sort((a, b) => {
+          if (a.isDir !== b.isDir) return a.isDir ? -1 : 1;
+          let v = 0;
+          if (sortCol === 'name') v = a.name.localeCompare(b.name);
+          else if (sortCol === 'size') v = a.size - b.size;
+          else if (sortCol === 'modified') v = new Date(a.modified) - new Date(b.modified);
+          return v * sortDir;
+        });
+
+      document.querySelectorAll('th[data-sort]').forEach(th => {
+        th.classList.remove('sorted', 'desc');
+        if (th.dataset.sort === sortCol) {
+          th.classList.add('sorted');
+          if (sortDir === -1) th.classList.add('desc');
+        }
+      });
+
+      if (sorted.length === 0) {
+        list.innerHTML = '';
+        emptyMsg.style.display = 'block';
+        return;
+      }
+      emptyMsg.style.display = 'none';
+
+      list.innerHTML = sorted.map(f => {
+        const href = D.path + encodeURIComponent(f.name) + (f.isDir ? '/' : '');
+        return '<tr data-name="' + escapeHtml(f.name) + '" data-dir="' + f.isDir + '">' +
+          '<td class="icon">' + getIcon(f) + '</td>' +
+          '<td><a class="name-link" href="' + href + '">' + escapeHtml(f.name) + '</a></td>' +
+          '<td class="size">' + (f.isDir ? '-' : formatSize(f.size)) + '</td>' +
+          '<td class="date">' + formatDate(f.modified) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    // Sort
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.onclick = () => {
+        if (sortCol === th.dataset.sort) sortDir *= -1;
+        else { sortCol = th.dataset.sort; sortDir = 1; }
+        render();
+      };
+    });
+
+    // Filter
+    document.getElementById('filter').oninput = render;
+
+    // Upload
+    if (D.uploadEnabled) {
+      const zone = document.getElementById('upload-zone');
+      zone.classList.add('enabled');
+      zone.ondragover = e => { e.preventDefault(); zone.classList.add('active'); };
+      zone.ondragleave = () => zone.classList.remove('active');
+      zone.ondrop = e => {
+        e.preventDefault();
+        zone.classList.remove('active');
+        const formData = new FormData();
+        [...e.dataTransfer.files].forEach(f => formData.append('file', f));
+        zone.innerHTML = '<p>Uploading...</p>';
+        fetch('/__upload?path=' + encodeURIComponent(D.path), { method: 'POST', body: formData })
+          .then(r => { if (!r.ok) throw new Error('Upload failed'); return r; })
+          .then(() => location.reload())
+          .catch(err => { zone.innerHTML = '<p style="color:red">Upload failed: ' + err.message + '</p>'; });
+      };
+    }
+
+    // Zip download
+    if (D.zipEnabled) {
+      const btn = document.getElementById('zip-btn');
+      btn.style.display = 'inline-block';
+      btn.onclick = () => { location.href = '/__zip?path=' + encodeURIComponent(D.path); };
+    }
+
+    // Preview
+    const previewExts = ['jpg','jpeg','png','gif','svg','webp','ico','bmp','mp4','webm','mp3','wav','ogg','pdf','txt','md','json','js','css','html','xml','yaml','yml','go','py','rs','rb','sh','ts','tsx','jsx'];
+
+    document.getElementById('file-list').onclick = e => {
+      const tr = e.target.closest('tr');
+      if (!tr || tr.dataset.dir === 'true') return;
+      const name = tr.dataset.name;
+      const ext = (name.split('.').pop() || '').toLowerCase();
+
+      if (!previewExts.includes(ext)) return;
+
+      e.preventDefault();
+      const url = D.path + encodeURIComponent(name);
+      const content = document.getElementById('preview-content');
+
+      if (['jpg','jpeg','png','gif','svg','webp','ico','bmp'].includes(ext)) {
+        content.innerHTML = '<img src="' + url + '" alt="' + escapeHtml(name) + '">';
+      } else if (['mp4','webm'].includes(ext)) {
+        content.innerHTML = '<video src="' + url + '" controls autoplay></video>';
+      } else if (['mp3','wav','ogg'].includes(ext)) {
+        content.innerHTML = '<audio src="' + url + '" controls autoplay></audio>';
+      } else if (ext === 'pdf') {
+        content.innerHTML = '<iframe src="' + url + '" style="width:80vw;height:80vh;"></iframe>';
+      } else {
+        fetch(url).then(r => r.text()).then(text => {
+          content.innerHTML = '<pre>' + escapeHtml(text) + '</pre>';
+        }).catch(() => {
+          content.innerHTML = '<p>Failed to load preview</p>';
+        });
+      }
+
+      document.getElementById('preview-modal').classList.add('active');
+    };
+
+    document.getElementById('preview-close').onclick = closePreview;
+    document.getElementById('preview-modal').onclick = e => {
+      if (e.target.id === 'preview-modal') closePreview();
+    };
+    document.onkeydown = e => {
+      if (e.key === 'Escape') closePreview();
+    };
+
+    function closePreview() {
+      document.getElementById('preview-modal').classList.remove('active');
+      const content = document.getElementById('preview-content');
+      content.innerHTML = '';
+    }
+
+    render();
+  </script>
+</body>
+</html>
