@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
@@ -233,23 +232,19 @@ func TestUploadHandler(t *testing.T) {
 			t.Errorf("expected sanitized filename 'passwd', got %s", resp.Filename)
 		}
 
-		if _, err := os.Stat(filepath.Join(dir, "..", "..", "..", "etc", "passwd")); err == nil {
-			t.Error("path traversal should be blocked")
+		// Verify the sanitized file was created inside the temp dir
+		uploadedPath := filepath.Join(dir, "passwd")
+		if _, err := os.Stat(uploadedPath); err != nil {
+			t.Errorf("expected sanitized upload in temp dir: %v", err)
+		}
+
+		// Verify the path is inside the temp directory
+		absUploaded, _ := filepath.Abs(uploadedPath)
+		absDir, _ := filepath.Abs(dir)
+		rel, _ := filepath.Rel(absDir, absUploaded)
+		if rel == ".." || len(rel) > 2 && rel[:3] == ".."+string(filepath.Separator) {
+			t.Error("uploaded file escaped temp directory")
 		}
 	})
 }
 
-func createMultipartRequest(t *testing.T, filename string, content []byte) (*http.Request, string) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile("file", filename)
-	if err != nil {
-		t.Fatal(err)
-	}
-	io.Copy(part, bytes.NewReader(content))
-	writer.Close()
-
-	req := httptest.NewRequest(http.MethodPost, "/__upload", body)
-	req.Header.Set("Content-Type", writer.FormDataContentType())
-	return req, writer.FormDataContentType()
-}

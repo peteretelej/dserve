@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -28,8 +29,10 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled bool) http.Handler {
 		if urlPath == "" {
 			urlPath = "/"
 		}
-		cleanPath := filepath.Clean(urlPath)
-		fullPath := filepath.Join(rootDir, cleanPath)
+		// Normalize URL path to prevent directory traversal
+		cleanURLPath := path.Clean("/" + urlPath)
+		relPath := strings.TrimPrefix(cleanURLPath, "/")
+		fullPath := filepath.Join(rootDir, filepath.FromSlash(relPath))
 
 		info, err := os.Stat(fullPath)
 		if err != nil {
@@ -53,7 +56,7 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled bool) http.Handler {
 			return
 		}
 
-		isRoot := cleanPath == "/" || cleanPath == "."
+		isRoot := relPath == "" || relPath == "."
 		var files []fileInfo
 		for _, e := range entries {
 			if isRoot && strings.HasPrefix(e.Name(), ".") {
@@ -86,9 +89,10 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled bool) http.Handler {
 		}
 
 		filesJSON, _ := json.Marshal(files)
+		pathJSON, _ := json.Marshal(displayPath)
 		dataScript := `<script>window.DSERVE={files:` + string(filesJSON) +
-			`,path:"` + displayPath +
-			`",uploadEnabled:` + boolStr(uploadEnabled) +
+			`,path:` + string(pathJSON) +
+			`,uploadEnabled:` + boolStr(uploadEnabled) +
 			`,zipEnabled:` + boolStr(zipEnabled) + `};</script>`
 
 		html := strings.Replace(uiHTML, "<!-- DSERVE_DATA_PLACEHOLDER -->", dataScript, 1)

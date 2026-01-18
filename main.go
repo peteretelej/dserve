@@ -149,8 +149,9 @@ func Serve(cfg *Config) error {
 	if cfg.WebUI {
 		fs = uiHandler(".", uploadEnabled, cfg.Zip)
 	} else {
-		fs = hideRootDotfiles(http.FileServer(http.Dir(".")))
+		fs = http.FileServer(http.Dir("."))
 	}
+	fs = hideRootDotfiles(fs)
 
 	if creds != nil {
 		fs = BASICAUTH(fs)
