@@ -1,26 +1,52 @@
+version: 2
+
 builds:
-  - binary: dserve
+  - id: dserve
+    main: .
+    binary: dserve
     goos:
-      - freebsd
-      - windows
-      - darwin
       - linux
+      - darwin
+      - windows
+      - freebsd
+    goarch:
+      - amd64
+      - arm64
+      - arm
+      - "386"
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm
+      - goos: freebsd
+        goarch: arm
     env:
       - CGO_ENABLED=0
-    goarch:
-      - 386
-      - amd64
-      - arm
-      - arm64
-# Archive customization
-archive:
-   name_template: "{{.Binary}}_{{.Version}}_{{.Os}}_{{.Arch}}"
-   format_overrides:
+    ldflags:
+      - -s -w
+    flags:
+      - -trimpath
+
+archives:
+  - id: default
+    formats:
+      - tar.gz
+    format_overrides:
       - goos: windows
-        format: zip
-   replacements:
-      386: 32bit
-      amd64: x64
-      darwin: maxOS
-   files:
+        formats:
+          - zip
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
       - README.md
+      - LICENSE
+
+checksum:
+  name_template: 'checksums.txt'
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
