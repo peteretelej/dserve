@@ -15,10 +15,10 @@ func TestZipHandler(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	subDir := filepath.Join(tmpDir, "subdir")
-	os.Mkdir(subDir, 0755)
-	os.WriteFile(filepath.Join(tmpDir, "file1.txt"), []byte("content1"), 0644)
-	os.WriteFile(filepath.Join(subDir, "file2.txt"), []byte("content2"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, ".hidden"), []byte("hidden"), 0644)
+	_ = os.Mkdir(subDir, 0755)
+	_ = os.WriteFile(filepath.Join(tmpDir, "file1.txt"), []byte("content1"), 0644)
+	_ = os.WriteFile(filepath.Join(subDir, "file2.txt"), []byte("content2"), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, ".hidden"), []byte("hidden"), 0644)
 
 	handler := zipHandler(tmpDir)
 
@@ -88,11 +88,11 @@ func TestZipHandler(t *testing.T) {
 func TestZipDotfileExclusion(t *testing.T) {
 	tmpDir := t.TempDir()
 
-	os.WriteFile(filepath.Join(tmpDir, "visible.txt"), []byte("visible"), 0644)
-	os.WriteFile(filepath.Join(tmpDir, ".hidden"), []byte("hidden"), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, "visible.txt"), []byte("visible"), 0644)
+	_ = os.WriteFile(filepath.Join(tmpDir, ".hidden"), []byte("hidden"), 0644)
 	hiddenDir := filepath.Join(tmpDir, ".hiddendir")
-	os.Mkdir(hiddenDir, 0755)
-	os.WriteFile(filepath.Join(hiddenDir, "secret.txt"), []byte("secret"), 0644)
+	_ = os.Mkdir(hiddenDir, 0755)
+	_ = os.WriteFile(filepath.Join(hiddenDir, "secret.txt"), []byte("secret"), 0644)
 
 	handler := zipHandler(tmpDir)
 
@@ -131,9 +131,9 @@ func TestZipDirectoryContents(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	subDir := filepath.Join(tmpDir, "folder")
-	os.Mkdir(subDir, 0755)
-	os.WriteFile(filepath.Join(tmpDir, "root.txt"), []byte("root content"), 0644)
-	os.WriteFile(filepath.Join(subDir, "nested.txt"), []byte("nested content"), 0644)
+	_ = os.Mkdir(subDir, 0755)
+	_ = os.WriteFile(filepath.Join(tmpDir, "root.txt"), []byte("root content"), 0644)
+	_ = os.WriteFile(filepath.Join(subDir, "nested.txt"), []byte("nested content"), 0644)
 
 	handler := zipHandler(tmpDir)
 

@@ -100,12 +100,12 @@ func TestCertExists(t *testing.T) {
 		t.Error("certExists returned true for non-existent files")
 	}
 
-	os.WriteFile(certPath, []byte("cert"), 0644)
+	_ = os.WriteFile(certPath, []byte("cert"), 0644)
 	if certExists(certPath, keyPath) {
 		t.Error("certExists returned true when only cert exists")
 	}
 
-	os.WriteFile(keyPath, []byte("key"), 0600)
+	_ = os.WriteFile(keyPath, []byte("key"), 0600)
 	if !certExists(certPath, keyPath) {
 		t.Error("certExists returned false when both files exist")
 	}

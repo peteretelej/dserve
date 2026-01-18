@@ -205,7 +205,7 @@ func liveReloadMiddleware(next http.Handler, lr *LiveReload) http.Handler {
 		if !strings.Contains(contentType, "text/html") {
 			rec.Header().Del("Content-Length")
 			w.WriteHeader(rec.statusCode)
-			w.Write(body)
+			_, _ = w.Write(body)
 			return
 		}
 
@@ -219,7 +219,7 @@ func liveReloadMiddleware(next http.Handler, lr *LiveReload) http.Handler {
 
 		w.Header().Set("Content-Length", fmt.Sprintf("%d", len(body)))
 		w.WriteHeader(rec.statusCode)
-		w.Write(body)
+		_, _ = w.Write(body)
 	})
 }
 

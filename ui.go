@@ -76,7 +76,7 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled, showDotfiles bool) htt
 
 		if strings.Contains(r.Header.Get("Accept"), "application/json") {
 			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(files)
+			_ = json.NewEncoder(w).Encode(files)
 			return
 		}
 
@@ -98,7 +98,7 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled, showDotfiles bool) htt
 		html := strings.Replace(uiHTML, "<!-- DSERVE_DATA_PLACEHOLDER -->", dataScript, 1)
 
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		w.Write([]byte(html))
+		_, _ = w.Write([]byte(html))
 	})
 }
 

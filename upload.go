@@ -25,7 +25,7 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 
 		if r.Method != http.MethodPost {
 			w.WriteHeader(http.StatusMethodNotAllowed)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "method not allowed"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "method not allowed"})
 			return
 		}
 
@@ -33,14 +33,14 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 
 		if err := r.ParseMultipartForm(maxSize); err != nil {
 			w.WriteHeader(http.StatusRequestEntityTooLarge)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "file too large"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "file too large"})
 			return
 		}
 
 		file, header, err := r.FormFile("file")
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "no file provided"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "no file provided"})
 			return
 		}
 		defer file.Close()
@@ -48,7 +48,7 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 		filename := safeFilename(header.Filename)
 		if filename == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "invalid filename"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "invalid filename"})
 			return
 		}
 
@@ -58,7 +58,7 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 			targetDir = filepath.Join(destDir, subdir)
 			if err := os.MkdirAll(targetDir, 0755); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
-				json.NewEncoder(w).Encode(uploadResponse{Error: "failed to create directory"})
+				_ = json.NewEncoder(w).Encode(uploadResponse{Error: "failed to create directory"})
 				return
 			}
 		}
@@ -68,7 +68,7 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 		dst, err := os.Create(destPath)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "failed to create file"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "failed to create file"})
 			return
 		}
 		defer dst.Close()
@@ -77,11 +77,11 @@ func uploadHandler(destDir string, maxSize int64) http.Handler {
 		if err != nil {
 			os.Remove(destPath)
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(uploadResponse{Error: "failed to save file"})
+			_ = json.NewEncoder(w).Encode(uploadResponse{Error: "failed to save file"})
 			return
 		}
 
-		json.NewEncoder(w).Encode(uploadResponse{
+		_ = json.NewEncoder(w).Encode(uploadResponse{
 			Success:  true,
 			Filename: filepath.Base(destPath),
 			Size:     size,

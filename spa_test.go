@@ -28,8 +28,8 @@ func TestSpaMiddleware(t *testing.T) {
 	}
 
 	oldWd, _ := os.Getwd()
-	os.Chdir(tmpDir)
-	defer os.Chdir(oldWd)
+	_ = os.Chdir(tmpDir)
+	defer func() { _ = os.Chdir(oldWd) }()
 
 	fileServer := http.FileServer(http.Dir("."))
 

@@ -47,7 +47,7 @@ func TestShouldCompress(t *testing.T) {
 func TestGzipMiddleware(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html")
-		w.Write([]byte("<html><body>Hello World</body></html>"))
+		_, _ = w.Write([]byte("<html><body>Hello World</body></html>"))
 	})
 
 	wrapped := gzipMiddleware(handler)
@@ -102,7 +102,7 @@ func TestGzipMiddleware(t *testing.T) {
 func TestGzipMiddlewareSkipsNonCompressible(t *testing.T) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "image/png")
-		w.Write([]byte{0x89, 0x50, 0x4E, 0x47}) // PNG magic bytes
+		_, _ = w.Write([]byte{0x89, 0x50, 0x4E, 0x47}) // PNG magic bytes
 	})
 
 	wrapped := gzipMiddleware(handler)
@@ -122,9 +122,9 @@ func TestGzipResponseWriter(t *testing.T) {
 	t.Run("handles multiple writes", func(t *testing.T) {
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte("first "))
-			w.Write([]byte("second "))
-			w.Write([]byte("third"))
+			_, _ = w.Write([]byte("first "))
+			_, _ = w.Write([]byte("second "))
+			_, _ = w.Write([]byte("third"))
 		})
 
 		wrapped := gzipMiddleware(handler)

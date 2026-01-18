@@ -78,13 +78,13 @@ func TestUniqueFilename(t *testing.T) {
 		t.Errorf("uniqueFilename should return test.txt when file doesn't exist, got %s", filepath.Base(path))
 	}
 
-	os.WriteFile(filepath.Join(dir, "test.txt"), []byte("content"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "test.txt"), []byte("content"), 0644)
 	path = uniqueFilename(dir, "test.txt")
 	if filepath.Base(path) != "test_1.txt" {
 		t.Errorf("uniqueFilename should return test_1.txt when test.txt exists, got %s", filepath.Base(path))
 	}
 
-	os.WriteFile(filepath.Join(dir, "test_1.txt"), []byte("content"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "test_1.txt"), []byte("content"), 0644)
 	path = uniqueFilename(dir, "test.txt")
 	if filepath.Base(path) != "test_2.txt" {
 		t.Errorf("uniqueFilename should return test_2.txt when test.txt and test_1.txt exist, got %s", filepath.Base(path))
@@ -99,7 +99,7 @@ func TestUploadHandler(t *testing.T) {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		part, _ := writer.CreateFormFile("file", "test.txt")
-		part.Write([]byte("hello world"))
+		_, _ = part.Write([]byte("hello world"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/__upload", body)
@@ -113,7 +113,7 @@ func TestUploadHandler(t *testing.T) {
 		}
 
 		var resp uploadResponse
-		json.NewDecoder(rec.Body).Decode(&resp)
+		_ = json.NewDecoder(rec.Body).Decode(&resp)
 		if !resp.Success {
 			t.Errorf("expected success=true, got error: %s", resp.Error)
 		}
@@ -157,7 +157,7 @@ func TestUploadHandler(t *testing.T) {
 		}
 
 		var resp uploadResponse
-		json.NewDecoder(rec.Body).Decode(&resp)
+		_ = json.NewDecoder(rec.Body).Decode(&resp)
 		if resp.Error != "no file provided" {
 			t.Errorf("expected error='no file provided', got %s", resp.Error)
 		}
@@ -169,7 +169,7 @@ func TestUploadHandler(t *testing.T) {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		part, _ := writer.CreateFormFile("file", "large.txt")
-		part.Write(bytes.Repeat([]byte("x"), 1000))
+		_, _ = part.Write(bytes.Repeat([]byte("x"), 1000))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/__upload", body)
@@ -187,8 +187,8 @@ func TestUploadHandler(t *testing.T) {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		part, _ := writer.CreateFormFile("file", "subfile.txt")
-		part.Write([]byte("subdir content"))
-		writer.WriteField("path", "subdir")
+		_, _ = part.Write([]byte("subdir content"))
+		_ = writer.WriteField("path", "subdir")
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/__upload", body)
@@ -214,7 +214,7 @@ func TestUploadHandler(t *testing.T) {
 		body := &bytes.Buffer{}
 		writer := multipart.NewWriter(body)
 		part, _ := writer.CreateFormFile("file", "../../../etc/passwd")
-		part.Write([]byte("evil content"))
+		_, _ = part.Write([]byte("evil content"))
 		writer.Close()
 
 		req := httptest.NewRequest(http.MethodPost, "/__upload", body)
@@ -228,7 +228,7 @@ func TestUploadHandler(t *testing.T) {
 		}
 
 		var resp uploadResponse
-		json.NewDecoder(rec.Body).Decode(&resp)
+		_ = json.NewDecoder(rec.Body).Decode(&resp)
 		if resp.Filename != "passwd" {
 			t.Errorf("expected sanitized filename 'passwd', got %s", resp.Filename)
 		}

@@ -13,10 +13,10 @@ import (
 func TestUIHandler(t *testing.T) {
 	dir := t.TempDir()
 
-	os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello"), 0644)
-	os.WriteFile(filepath.Join(dir, "image.png"), []byte("fake png"), 0644)
-	os.Mkdir(filepath.Join(dir, "subdir"), 0755)
-	os.WriteFile(filepath.Join(dir, "subdir", "nested.txt"), []byte("nested"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "file.txt"), []byte("hello"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "image.png"), []byte("fake png"), 0644)
+	_ = os.Mkdir(filepath.Join(dir, "subdir"), 0755)
+	_ = os.WriteFile(filepath.Join(dir, "subdir", "nested.txt"), []byte("nested"), 0644)
 
 	handler := uiHandler(dir, false, false, false)
 
@@ -134,7 +134,7 @@ func TestUIHandler(t *testing.T) {
 
 func TestUIHandlerWithFeatures(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
 
 	t.Run("includes upload flag in data", func(t *testing.T) {
 		handler := uiHandler(dir, true, false, false)
@@ -171,8 +171,8 @@ func TestUIHandlerWithFeatures(t *testing.T) {
 
 func TestUIHandlerHidesDotfiles(t *testing.T) {
 	dir := t.TempDir()
-	os.WriteFile(filepath.Join(dir, ".hidden"), []byte("secret"), 0644)
-	os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("public"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, ".hidden"), []byte("secret"), 0644)
+	_ = os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("public"), 0644)
 
 	handler := uiHandler(dir, false, false, false)
 
@@ -183,7 +183,7 @@ func TestUIHandlerHidesDotfiles(t *testing.T) {
 	handler.ServeHTTP(rec, req)
 
 	var files []fileInfo
-	json.NewDecoder(rec.Body).Decode(&files)
+	_ = json.NewDecoder(rec.Body).Decode(&files)
 
 	for _, f := range files {
 		if f.Name == ".hidden" {
