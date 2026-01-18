@@ -20,6 +20,7 @@ var (
 	tlsEnabled = flag.Bool("tls", false, "enable HTTPS")
 	certFile   = flag.String("cert", "", "TLS certificate file")
 	keyFile    = flag.String("key", "", "TLS key file")
+	compress   = flag.Bool("compress", false, "enable gzip compression")
 )
 
 func main() {
@@ -44,18 +45,22 @@ func main() {
 		protocol = "https"
 	}
 	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, listenAddr)
-	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile); err != nil {
+	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string) error {
+func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool) error {
 	mux := http.NewServeMux()
 
 	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
 
 	if creds != nil {
 		fs = BASICAUTH(fs)
+	}
+
+	if useCompress {
+		fs = gzipMiddleware(fs)
 	}
 
 	mux.Handle("/", fs)
