@@ -1,63 +1,83 @@
-# dserve - Directory Serve
+# dserve
 
 [![CI](https://github.com/peteretelej/dserve/actions/workflows/ci.yml/badge.svg)](https://github.com/peteretelej/dserve/actions/workflows/ci.yml)
-[![GitHub release](https://img.shields.io/github/release/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/releases)
 [![Go Report Card](https://goreportcard.com/badge/peteretelej/dserve)](http://goreportcard.com/report/peteretelej/dserve)
-[![license](https://img.shields.io/github/license/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/blob/master/LICENSE.md)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpeteretelej%2Fdserve.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpeteretelej%2Fdserve?ref=badge_shield)
 
-__dserve__ serve a directory over HTTP
+A fast, zero-config HTTP file server for local development.
 
-## Installation
-
-### Option 1: Go Install (Recommended)
-
-Requires Go 1.24+
+## Install
 
 ```bash
 go install github.com/peteretelej/dserve@latest
 ```
 
-### Option 2: Download Binary
+Or download from [Releases](https://github.com/peteretelej/dserve/releases).
 
-Download from [Releases](https://github.com/peteretelej/dserve/releases)
+## Quick Start
 
-> **Note:** Requires Windows 10 or later. For Windows 7/8, use [v2.2.4](https://github.com/peteretelej/dserve/releases/tag/v2.2.4)
-
-### Usage
-Enter the directory you'd like to serve and run
-```
+```bash
+# Serve current directory
 dserve
+
+# Serve a specific directory
+dserve -dir ./public
+
+# With live reload for development
+dserve -live
+
+# Enable all features
+dserve -webui -live -upload -zip -compress
 ```
 
-That's it. This launches a webserver on port 9011 serving the directory. Visit [http://localhost:9011](http://localhost:9011) to access the site.
+Visit http://localhost:9011
 
-Speficy a directory in another location
-```
-dserve -dir /var/www/html
-```
+## Features
 
-Serve on a different port
-```
-dserve -port 8080
-```
+| Flag | Description |
+|------|-------------|
+| `-dir` | Directory to serve (default: current) |
+| `-port` | Port number (default: 9011) |
+| `-local` | Bind to localhost only |
+| `-webui` | Modern directory listing UI |
+| `-live` | Auto-reload browser on file changes |
+| `-spa` | Single-page app mode (fallback to index.html) |
+| `-upload` | Enable file uploads |
+| `-zip` | Enable directory download as zip |
+| `-compress` | Gzip compression |
+| `-tls` | HTTPS with auto-generated certificate |
+| `-basicauth` | HTTP basic auth (user:pass) |
 
-Enable HTTP basic authentication
-```
-dserve -basicauth user1:pass123
-```
+## Examples
 
-Restrict server to localhost
-```
-dserve -local
-```
-
-You can chain the arguments
-```
-dserve -dir ~/mysite -port 80 -basicauth user:pass12345
+**Development server with live reload:**
+```bash
+dserve -live -webui
 ```
 
+**SPA development (React, Vue, etc):**
+```bash
+dserve -spa -live
+```
 
+**Share files on local network:**
+```bash
+dserve -webui -upload -zip
+```
+
+**Secure with HTTPS and auth:**
+```bash
+dserve -tls -basicauth admin:secret123
+```
+
+## Documentation
+
+See [docs/design.md](docs/design.md) for technical details.
+
+## Requirements
+
+- Go 1.21+ (for building)
+- Windows 10+ / macOS / Linux
 
 ## License
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Fpeteretelej%2Fdserve.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Fpeteretelej%2Fdserve?ref=badge_large)
+
+MIT - See [LICENSE](LICENSE.md)

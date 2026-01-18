@@ -122,3 +122,55 @@ func TestGetLocalIPs(t *testing.T) {
 		}
 	}
 }
+
+func TestLoadOrGenerateCert(t *testing.T) {
+	tmpDir := t.TempDir()
+	origConfigDir := configDir
+	configDir = func() string { return tmpDir }
+	t.Cleanup(func() { configDir = origConfigDir })
+
+	t.Run("generates new cert when none exists", func(t *testing.T) {
+		certPath, keyPath, err := loadOrGenerateCert()
+		if err != nil {
+			t.Fatalf("loadOrGenerateCert failed: %v", err)
+		}
+
+		if certPath == "" || keyPath == "" {
+			t.Error("expected non-empty cert and key paths")
+		}
+
+		if _, err := os.Stat(certPath); err != nil {
+			t.Errorf("cert file not created: %v", err)
+		}
+		if _, err := os.Stat(keyPath); err != nil {
+			t.Errorf("key file not created: %v", err)
+		}
+	})
+
+	t.Run("reuses existing cert", func(t *testing.T) {
+		certPath1, keyPath1, _ := loadOrGenerateCert()
+		certPath2, keyPath2, err := loadOrGenerateCert()
+		if err != nil {
+			t.Fatalf("loadOrGenerateCert failed: %v", err)
+		}
+
+		if certPath1 != certPath2 || keyPath1 != keyPath2 {
+			t.Error("expected same paths for existing cert")
+		}
+	})
+}
+
+func TestCertPaths(t *testing.T) {
+	tmpDir := t.TempDir()
+	origConfigDir := configDir
+	configDir = func() string { return tmpDir }
+	t.Cleanup(func() { configDir = origConfigDir })
+
+	certPath, keyPath := certPaths()
+	if certPath != filepath.Join(tmpDir, "cert.pem") {
+		t.Errorf("unexpected cert path: %s", certPath)
+	}
+	if keyPath != filepath.Join(tmpDir, "key.pem") {
+		t.Errorf("unexpected key path: %s", keyPath)
+	}
+}
