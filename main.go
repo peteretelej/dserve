@@ -12,11 +12,14 @@ import (
 )
 
 var (
-	dir       = flag.String("dir", "./", "the directory to serve, defaults to current directory")
-	port      = flag.Int("port", 9011, "the port to serve at, defaults 9011")
-	local     = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
-	basicauth = flag.String("basicauth", "", "basicauth creds, enables basic authentication")
-	timeout   = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
+	dir        = flag.String("dir", "./", "the directory to serve, defaults to current directory")
+	port       = flag.Int("port", 9011, "the port to serve at, defaults 9011")
+	local      = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
+	basicauth  = flag.String("basicauth", "", "basicauth creds, enables basic authentication")
+	timeout    = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
+	tlsEnabled = flag.Bool("tls", false, "enable HTTPS")
+	certFile   = flag.String("cert", "", "TLS certificate file")
+	keyFile    = flag.String("key", "", "TLS key file")
 )
 
 func main() {
@@ -36,14 +39,17 @@ func main() {
 	}
 
 	listenAddr := fmt.Sprintf("%s:%d", addr, *port)
-	fmt.Printf("Launching dserve http server %s on %s\n", *dir, listenAddr)
-	if err := Serve(listenAddr, *timeout); err != nil {
+	protocol := "http"
+	if *tlsEnabled {
+		protocol = "https"
+	}
+	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, listenAddr)
+	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-// Serve launches HTTP server serving on listenAddr and servers a basic_auth secured directory at secure/static
-func Serve(listenAddr string, timeout time.Duration) error {
+func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string) error {
 	mux := http.NewServeMux()
 
 	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
@@ -61,6 +67,17 @@ func Serve(listenAddr string, timeout time.Duration) error {
 		WriteTimeout:   timeout * 2,
 		IdleTimeout:    timeout * 10,
 		MaxHeaderBytes: 1 << 20,
+	}
+
+	if useTLS {
+		if cert == "" || key == "" {
+			var err error
+			cert, key, err = loadOrGenerateCert()
+			if err != nil {
+				return fmt.Errorf("TLS setup failed: %w", err)
+			}
+		}
+		return svr.ListenAndServeTLS(cert, key)
 	}
 	return svr.ListenAndServe()
 }
