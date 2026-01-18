@@ -12,24 +12,24 @@ import (
 )
 
 var (
-	dir        = flag.String("dir", "./", "the directory to serve, defaults to current directory")
-	port       = flag.Int("port", 9011, "the port to serve at, defaults 9011")
-	local      = flag.Bool("local", false, "whether to serve on all address or on localhost, default all addresses")
-	basicauth  = flag.String("basicauth", "", "basicauth creds, enables basic authentication")
-	timeout    = flag.Duration("timeout", time.Minute*3, "http server read timeout, write timeout will be double this")
+	dir       = flag.String("dir", "./", "directory to serve")
+	port      = flag.Int("port", 9011, "port to serve on")
+	local     = flag.Bool("local", false, "serve on localhost only")
+	basicauth = flag.String("basicauth", "", "basic auth credentials (user:pass)")
+	timeout   = flag.Duration("timeout", time.Minute*3, "server timeout")
+
 	tlsEnabled = flag.Bool("tls", false, "enable HTTPS")
 	certFile   = flag.String("cert", "", "TLS certificate file")
 	keyFile    = flag.String("key", "", "TLS key file")
-	compress   = flag.Bool("compress", false, "enable gzip compression")
-	spa        = flag.Bool("spa", false, "enable SPA mode (serve index.html for missing routes)")
-	spaIndex   = flag.String("spa-index", "index.html", "SPA fallback file")
-	live       = flag.Bool("live", false, "enable live reload on file changes")
-	watch      = flag.String("watch", "*", "file patterns to watch for live reload (comma-separated)")
-	upload     = flag.Bool("upload", false, "enable file uploads")
-	uploadDir  = flag.String("upload-dir", "", "upload destination directory")
-	maxSize    = flag.String("max-size", "100MB", "maximum upload size")
-	zipDl      = flag.Bool("zip", false, "enable directory download as zip")
-	noUI       = flag.Bool("no-ui", false, "disable custom web UI")
+
+	compress = flag.Bool("compress", false, "enable gzip compression")
+	spa      = flag.String("spa", "", "enable SPA mode with fallback file (default: index.html if flag present)")
+	live     = flag.String("live", "", "enable live reload with watch pattern (default: * if flag present)")
+	upload   = flag.Bool("upload", false, "enable file uploads")
+	uploadDir = flag.String("upload-dir", "", "upload destination directory")
+	maxSize  = flag.String("max-size", "100MB", "maximum upload size")
+	zipDl    = flag.Bool("zip", false, "enable directory download as zip")
+	webUI    = flag.Bool("webui", false, "enable web UI for directory listing")
 )
 
 func main() {
@@ -39,19 +39,42 @@ func main() {
 	if err := os.Chdir(*dir); err != nil {
 		log.Fatal(err)
 	}
+
 	var addr string
 	if *local {
 		addr = "localhost"
 	}
+
 	if err := authInit(*basicauth); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	var lr *LiveReload
-	if *live {
-		var err error
-		lr, err = NewLiveReload(*watch)
+	cfg := &Config{
+		Addr:     fmt.Sprintf("%s:%d", addr, *port),
+		Timeout:  *timeout,
+		Compress: *compress,
+		Zip:      *zipDl,
+		WebUI:    *webUI,
+	}
+
+	if *tlsEnabled {
+		cfg.TLS = &TLSConfig{Cert: *certFile, Key: *keyFile}
+	}
+
+	if isFlagSet("spa") {
+		cfg.SPA = *spa
+		if cfg.SPA == "" {
+			cfg.SPA = "index.html"
+		}
+	}
+
+	if isFlagSet("live") {
+		pattern := *live
+		if pattern == "" {
+			pattern = "*"
+		}
+		lr, err := NewLiveReload(pattern)
 		if err != nil {
 			log.Fatalf("Failed to initialize live reload: %v", err)
 		}
@@ -60,88 +83,100 @@ func main() {
 		}
 		lr.Start()
 		defer lr.Close()
+		cfg.LiveReload = lr
 	}
 
-	listenAddr := fmt.Sprintf("%s:%d", addr, *port)
-	protocol := "http"
-	if *tlsEnabled {
-		protocol = "https"
-	}
-	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, listenAddr)
-	if *live {
-		fmt.Printf("Live reload enabled, watching: %s\n", *watch)
-	}
-
-	var uploadMaxSize int64
-	var uploadDest string
 	if *upload {
-		var err error
-		uploadMaxSize, err = parseSize(*maxSize)
+		maxBytes, err := parseSize(*maxSize)
 		if err != nil {
 			log.Fatalf("invalid max-size: %v", err)
 		}
-		uploadDest = *uploadDir
-		if uploadDest == "" {
-			uploadDest = "."
+		dest := *uploadDir
+		if dest == "" {
+			dest = "."
 		}
-		fmt.Printf("Uploads enabled (max: %s, dest: %s)\n", *maxSize, uploadDest)
+		cfg.Upload = &UploadConfig{Dir: dest, MaxBytes: maxBytes}
 	}
 
-	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr, *upload, uploadDest, uploadMaxSize, *zipDl, *noUI); err != nil {
+	protocol := "http"
+	if cfg.TLS != nil {
+		protocol = "https"
+	}
+	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, cfg.Addr)
+	if cfg.LiveReload != nil {
+		fmt.Printf("Live reload enabled, watching: %s\n", *live)
+	}
+	if cfg.Upload != nil {
+		fmt.Printf("Uploads enabled (max: %s, dest: %s)\n", *maxSize, cfg.Upload.Dir)
+	}
+
+	if err := Serve(cfg); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload, useUpload bool, uploadDest string, uploadMaxBytes int64, useZip bool, disableUI bool) error {
+func isFlagSet(name string) bool {
+	found := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == name {
+			found = true
+		}
+	})
+	return found
+}
+
+func Serve(cfg *Config) error {
 	mux := http.NewServeMux()
 
-	if lr != nil {
-		mux.Handle("/__livereload", lr)
+	if cfg.LiveReload != nil {
+		mux.Handle("/__livereload", cfg.LiveReload)
 	}
 
-	if useUpload {
-		mux.Handle("/__upload", uploadHandler(uploadDest, uploadMaxBytes))
+	uploadEnabled := cfg.Upload != nil
+	if uploadEnabled {
+		mux.Handle("/__upload", uploadHandler(cfg.Upload.Dir, cfg.Upload.MaxBytes))
 	}
 
-	if useZip {
+	if cfg.Zip {
 		mux.Handle("/__zip", zipHandler("."))
 	}
 
 	var fs http.Handler
-	if disableUI {
-		fs = hideRootDotfiles(http.FileServer(http.Dir(".")))
+	if cfg.WebUI {
+		fs = uiHandler(".", uploadEnabled, cfg.Zip)
 	} else {
-		fs = uiHandler(".", useUpload, useZip)
+		fs = hideRootDotfiles(http.FileServer(http.Dir(".")))
 	}
 
 	if creds != nil {
 		fs = BASICAUTH(fs)
 	}
 
-	if useCompress {
+	if cfg.Compress {
 		fs = gzipMiddleware(fs)
 	}
 
-	if useSPA {
-		fs = spaMiddleware(fs, spaIndexFile)
+	if cfg.SPA != "" {
+		fs = spaMiddleware(fs, cfg.SPA)
 	}
 
-	if lr != nil {
-		fs = liveReloadMiddleware(fs, lr)
+	if cfg.LiveReload != nil {
+		fs = liveReloadMiddleware(fs, cfg.LiveReload)
 	}
 
 	mux.Handle("/", fs)
 
 	svr := &http.Server{
-		Addr:           listenAddr,
+		Addr:           cfg.Addr,
 		Handler:        mux,
-		ReadTimeout:    timeout,
-		WriteTimeout:   timeout * 2,
-		IdleTimeout:    timeout * 10,
+		ReadTimeout:    cfg.Timeout,
+		WriteTimeout:   cfg.Timeout * 2,
+		IdleTimeout:    cfg.Timeout * 10,
 		MaxHeaderBytes: 1 << 20,
 	}
 
-	if useTLS {
+	if cfg.TLS != nil {
+		cert, key := cfg.TLS.Cert, cfg.TLS.Key
 		if cert == "" || key == "" {
 			var err error
 			cert, key, err = loadOrGenerateCert()
@@ -154,7 +189,6 @@ func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key stri
 	return svr.ListenAndServe()
 }
 
-// BASICAUTH is the basic auth middleware
 func BASICAUTH(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !validBasicAuth(r) {
@@ -166,27 +200,23 @@ func BASICAUTH(next http.Handler) http.Handler {
 	})
 }
 
-// hideRootDotfiles middleware hides any dotfiles in the root of the directory being served
 func hideRootDotfiles(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/.") {
-			http.Error(w, "access to dotfiles in root directory is forbidden 😞", http.StatusForbidden)
+			http.Error(w, "access to dotfiles in root directory is forbidden", http.StatusForbidden)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
 }
 
-// AuthCreds defines the http basic authentication credentials
-// Note: Though the password is not served, it is stored in plaintext
 type AuthCreds struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
-var creds *AuthCreds // written during  initialization
+var creds *AuthCreds
 
-// authInit initializes basicauth
 func authInit(bAuth string) error {
 	if bAuth == "" {
 		return nil
@@ -202,7 +232,6 @@ func authInit(bAuth string) error {
 	return nil
 }
 
-// validBasicAuth checks the basicauth authentication credentials
 func validBasicAuth(r *http.Request) bool {
 	if creds == nil {
 		return false
