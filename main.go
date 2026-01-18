@@ -222,7 +222,7 @@ func authInit(bAuth string) error {
 		return nil
 	}
 	i := strings.Index(bAuth, ":")
-	if i < 3 || i < len(bAuth)-1 {
+	if i < 3 || i >= len(bAuth)-1 {
 		return errors.New("invalid basicauth flag value: value should be USERNAME:PASSWORD, e.g. dserve -basicauth admin:passw0rd")
 	}
 	creds = &AuthCreds{
