@@ -25,6 +25,9 @@ var (
 	spaIndex   = flag.String("spa-index", "index.html", "SPA fallback file")
 	live       = flag.Bool("live", false, "enable live reload on file changes")
 	watch      = flag.String("watch", "*", "file patterns to watch for live reload (comma-separated)")
+	upload     = flag.Bool("upload", false, "enable file uploads")
+	uploadDir  = flag.String("upload-dir", "", "upload destination directory")
+	maxSize    = flag.String("max-size", "100MB", "maximum upload size")
 )
 
 func main() {
@@ -66,16 +69,36 @@ func main() {
 	if *live {
 		fmt.Printf("Live reload enabled, watching: %s\n", *watch)
 	}
-	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr); err != nil {
+
+	var uploadMaxSize int64
+	var uploadDest string
+	if *upload {
+		var err error
+		uploadMaxSize, err = parseSize(*maxSize)
+		if err != nil {
+			log.Fatalf("invalid max-size: %v", err)
+		}
+		uploadDest = *uploadDir
+		if uploadDest == "" {
+			uploadDest = "."
+		}
+		fmt.Printf("Uploads enabled (max: %s, dest: %s)\n", *maxSize, uploadDest)
+	}
+
+	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr, *upload, uploadDest, uploadMaxSize); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload) error {
+func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload, useUpload bool, uploadDest string, uploadMaxBytes int64) error {
 	mux := http.NewServeMux()
 
 	if lr != nil {
 		mux.Handle("/__livereload", lr)
+	}
+
+	if useUpload {
+		mux.Handle("/__upload", uploadHandler(uploadDest, uploadMaxBytes))
 	}
 
 	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
