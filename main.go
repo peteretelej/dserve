@@ -23,6 +23,8 @@ var (
 	compress   = flag.Bool("compress", false, "enable gzip compression")
 	spa        = flag.Bool("spa", false, "enable SPA mode (serve index.html for missing routes)")
 	spaIndex   = flag.String("spa-index", "index.html", "SPA fallback file")
+	live       = flag.Bool("live", false, "enable live reload on file changes")
+	watch      = flag.String("watch", "*", "file patterns to watch for live reload (comma-separated)")
 )
 
 func main() {
@@ -41,19 +43,40 @@ func main() {
 		os.Exit(1)
 	}
 
+	var lr *LiveReload
+	if *live {
+		var err error
+		lr, err = NewLiveReload(*watch)
+		if err != nil {
+			log.Fatalf("Failed to initialize live reload: %v", err)
+		}
+		if err := lr.Watch("."); err != nil {
+			log.Fatalf("Failed to watch directory: %v", err)
+		}
+		lr.Start()
+		defer lr.Close()
+	}
+
 	listenAddr := fmt.Sprintf("%s:%d", addr, *port)
 	protocol := "http"
 	if *tlsEnabled {
 		protocol = "https"
 	}
 	fmt.Printf("Launching dserve %s server %s on %s\n", protocol, *dir, listenAddr)
-	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex); err != nil {
+	if *live {
+		fmt.Printf("Live reload enabled, watching: %s\n", *watch)
+	}
+	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string) error {
+func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload) error {
 	mux := http.NewServeMux()
+
+	if lr != nil {
+		mux.Handle("/__livereload", lr)
+	}
 
 	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
 
@@ -67,6 +90,10 @@ func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key stri
 
 	if useSPA {
 		fs = spaMiddleware(fs, spaIndexFile)
+	}
+
+	if lr != nil {
+		fs = liveReloadMiddleware(fs, lr)
 	}
 
 	mux.Handle("/", fs)
