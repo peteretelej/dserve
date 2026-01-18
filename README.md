@@ -60,16 +60,12 @@ dserve -tls -basicauth admin:secret123
 dserve -help
   -basicauth string
     	basic auth credentials (user:pass)
-  -cert string
-    	TLS certificate file
   -compress
     	enable gzip compression
   -dir string
     	directory to serve (default "./")
   -dotfiles
     	show and allow access to dotfiles (use with caution)
-  -key string
-    	TLS key file
   -live string
     	enable live reload with watch pattern (default: * if flag present)
   -local
@@ -84,6 +80,10 @@ dserve -help
     	server timeout (default 3m0s)
   -tls
     	enable HTTPS
+  -tls-cert string
+    	TLS certificate file
+  -tls-key string
+    	TLS key file
   -upload
     	enable file uploads
   -upload-dir string

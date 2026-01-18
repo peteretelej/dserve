@@ -19,8 +19,8 @@ var (
 	timeout   = flag.Duration("timeout", time.Minute*3, "server timeout")
 
 	tlsEnabled = flag.Bool("tls", false, "enable HTTPS")
-	certFile   = flag.String("cert", "", "TLS certificate file")
-	keyFile    = flag.String("key", "", "TLS key file")
+	certFile   = flag.String("tls-cert", "", "TLS certificate file")
+	keyFile    = flag.String("tls-key", "", "TLS key file")
 
 	compress = flag.Bool("compress", false, "enable gzip compression")
 	spa      = flag.String("spa", "", "enable SPA mode with fallback file (default: index.html if flag present)")
