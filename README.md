@@ -66,6 +66,8 @@ dserve -help
     	enable gzip compression
   -dir string
     	directory to serve (default "./")
+  -dotfiles
+    	show and allow access to dotfiles (use with caution)
   -key string
     	TLS key file
   -live string
