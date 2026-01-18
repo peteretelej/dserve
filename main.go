@@ -28,6 +28,7 @@ var (
 	upload     = flag.Bool("upload", false, "enable file uploads")
 	uploadDir  = flag.String("upload-dir", "", "upload destination directory")
 	maxSize    = flag.String("max-size", "100MB", "maximum upload size")
+	zipDl      = flag.Bool("zip", false, "enable directory download as zip")
 )
 
 func main() {
@@ -85,12 +86,12 @@ func main() {
 		fmt.Printf("Uploads enabled (max: %s, dest: %s)\n", *maxSize, uploadDest)
 	}
 
-	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr, *upload, uploadDest, uploadMaxSize); err != nil {
+	if err := Serve(listenAddr, *timeout, *tlsEnabled, *certFile, *keyFile, *compress, *spa, *spaIndex, lr, *upload, uploadDest, uploadMaxSize, *zipDl); err != nil {
 		log.Fatalf("Server crashed: %v", err)
 	}
 }
 
-func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload, useUpload bool, uploadDest string, uploadMaxBytes int64) error {
+func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key string, useCompress bool, useSPA bool, spaIndexFile string, lr *LiveReload, useUpload bool, uploadDest string, uploadMaxBytes int64, useZip bool) error {
 	mux := http.NewServeMux()
 
 	if lr != nil {
@@ -99,6 +100,10 @@ func Serve(listenAddr string, timeout time.Duration, useTLS bool, cert, key stri
 
 	if useUpload {
 		mux.Handle("/__upload", uploadHandler(uploadDest, uploadMaxBytes))
+	}
+
+	if useZip {
+		mux.Handle("/__zip", zipHandler("."))
 	}
 
 	fs := hideRootDotfiles(http.FileServer(http.Dir(".")))
