@@ -30,6 +30,7 @@ var (
 	maxSize  = flag.String("max-size", "100MB", "maximum upload size")
 	zipDl    = flag.Bool("zip", false, "enable directory download as zip")
 	webUI    = flag.Bool("webui", false, "enable web UI for directory listing")
+	dotfiles = flag.Bool("dotfiles", false, "show and allow access to dotfiles (use with caution)")
 )
 
 func main() {
@@ -56,6 +57,11 @@ func main() {
 		Compress: *compress,
 		Zip:      *zipDl,
 		WebUI:    *webUI,
+		Dotfiles: *dotfiles,
+	}
+
+	if cfg.Dotfiles {
+		log.Println("WARNING: dotfiles are visible and accessible - ensure no sensitive files are exposed")
 	}
 
 	if *tlsEnabled {
@@ -113,6 +119,9 @@ func main() {
 	if cfg.Upload != nil {
 		fmt.Printf("Uploads enabled (max: %s, dest: %s)\n", *maxSize, cfg.Upload.Dir)
 	}
+	if cfg.WebUI {
+		fmt.Printf("Browse files: %s://%s/__browse/\n", protocol, displayAddr)
+	}
 
 	if err := Serve(cfg); err != nil {
 		log.Fatalf("Server crashed: %v", err)
@@ -145,13 +154,16 @@ func Serve(cfg *Config) error {
 		mux.Handle("/__zip", zipHandler("."))
 	}
 
-	var fs http.Handler
 	if cfg.WebUI {
-		fs = uiHandler(".", uploadEnabled, cfg.Zip)
-	} else {
-		fs = http.FileServer(http.Dir("."))
+		mux.Handle("/__browse/", http.StripPrefix("/__browse", uiHandler(".", uploadEnabled, cfg.Zip, cfg.Dotfiles)))
 	}
-	fs = hideRootDotfiles(fs)
+
+	var fs http.Handler
+	if cfg.Dotfiles {
+		fs = http.FileServer(http.Dir("."))
+	} else {
+		fs = hideRootDotfiles(http.FileServer(dotfileHidingFS{http.Dir(".")}))
+	}
 
 	if creds != nil {
 		fs = BASICAUTH(fs)
@@ -213,6 +225,38 @@ func hideRootDotfiles(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// dotfileHidingFS wraps http.FileSystem to hide dotfiles from root directory listings
+type dotfileHidingFS struct {
+	fs http.FileSystem
+}
+
+func (dfs dotfileHidingFS) Open(name string) (http.File, error) {
+	f, err := dfs.fs.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	return dotfileHidingFile{f, name == "/" || name == ""}, nil
+}
+
+type dotfileHidingFile struct {
+	http.File
+	isRoot bool
+}
+
+func (f dotfileHidingFile) Readdir(n int) ([]os.FileInfo, error) {
+	files, err := f.File.Readdir(n)
+	if err != nil || !f.isRoot {
+		return files, err
+	}
+	filtered := files[:0]
+	for _, fi := range files {
+		if !strings.HasPrefix(fi.Name(), ".") {
+			filtered = append(filtered, fi)
+		}
+	}
+	return filtered, nil
 }
 
 type AuthCreds struct {

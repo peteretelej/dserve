@@ -18,7 +18,7 @@ func TestUIHandler(t *testing.T) {
 	os.Mkdir(filepath.Join(dir, "subdir"), 0755)
 	os.WriteFile(filepath.Join(dir, "subdir", "nested.txt"), []byte("nested"), 0644)
 
-	handler := uiHandler(dir, false, false)
+	handler := uiHandler(dir, false, false, false)
 
 	t.Run("serves HTML for directory", func(t *testing.T) {
 		req := httptest.NewRequest("GET", "/", nil)
@@ -137,7 +137,7 @@ func TestUIHandlerWithFeatures(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
 
 	t.Run("includes upload flag in data", func(t *testing.T) {
-		handler := uiHandler(dir, true, false)
+		handler := uiHandler(dir, true, false, false)
 		req := httptest.NewRequest("GET", "/", nil)
 		rec := httptest.NewRecorder()
 
@@ -153,7 +153,7 @@ func TestUIHandlerWithFeatures(t *testing.T) {
 	})
 
 	t.Run("includes zip flag in data", func(t *testing.T) {
-		handler := uiHandler(dir, false, true)
+		handler := uiHandler(dir, false, true, false)
 		req := httptest.NewRequest("GET", "/", nil)
 		rec := httptest.NewRecorder()
 
@@ -174,7 +174,7 @@ func TestUIHandlerHidesDotfiles(t *testing.T) {
 	os.WriteFile(filepath.Join(dir, ".hidden"), []byte("secret"), 0644)
 	os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("public"), 0644)
 
-	handler := uiHandler(dir, false, false)
+	handler := uiHandler(dir, false, false, false)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	req.Header.Set("Accept", "application/json")

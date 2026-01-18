@@ -21,7 +21,7 @@ type fileInfo struct {
 	IsDir    bool      `json:"isDir"`
 }
 
-func uiHandler(rootDir string, uploadEnabled, zipEnabled bool) http.Handler {
+func uiHandler(rootDir string, uploadEnabled, zipEnabled, showDotfiles bool) http.Handler {
 	fileServer := http.FileServer(http.Dir(rootDir))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +59,7 @@ func uiHandler(rootDir string, uploadEnabled, zipEnabled bool) http.Handler {
 		isRoot := relPath == "" || relPath == "."
 		var files []fileInfo
 		for _, e := range entries {
-			if isRoot && strings.HasPrefix(e.Name(), ".") {
+			if !showDotfiles && isRoot && strings.HasPrefix(e.Name(), ".") {
 				continue
 			}
 			fi, err := e.Info()

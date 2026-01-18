@@ -12,6 +12,7 @@ type Config struct {
 	Upload     *UploadConfig
 	Zip        bool
 	WebUI      bool
+	Dotfiles   bool // show and allow access to dotfiles
 }
 
 type TLSConfig struct {

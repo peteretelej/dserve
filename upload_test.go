@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -242,7 +243,7 @@ func TestUploadHandler(t *testing.T) {
 		absUploaded, _ := filepath.Abs(uploadedPath)
 		absDir, _ := filepath.Abs(dir)
 		rel, _ := filepath.Rel(absDir, absUploaded)
-		if rel == ".." || len(rel) > 2 && rel[:3] == ".."+string(filepath.Separator) {
+		if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			t.Error("uploaded file escaped temp directory")
 		}
 	})
