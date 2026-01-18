@@ -1,6 +1,6 @@
 # dserve - Directory Serve
 
-[![Build Status](https://travis-ci.org/peteretelej/dserve.svg?branch=master)](https://travis-ci.org/peteretelej/dserve)
+[![CI](https://github.com/peteretelej/dserve/actions/workflows/ci.yml/badge.svg)](https://github.com/peteretelej/dserve/actions/workflows/ci.yml)
 [![GitHub release](https://img.shields.io/github/release/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/releases)
 [![Go Report Card](https://goreportcard.com/badge/peteretelej/dserve)](http://goreportcard.com/report/peteretelej/dserve)
 [![license](https://img.shields.io/github/license/peteretelej/dserve.svg)](https://github.com/peteretelej/dserve/blob/master/LICENSE.md)
@@ -8,19 +8,21 @@
 
 __dserve__ serve a directory over HTTP
 
-## dserve Installation 
+## Installation
 
-#### Option 1 (Fast & Easy)
-Download Windows, Linux or Mac 32bit or 64bit executable application from the releases:
+### Option 1: Go Install (Recommended)
 
-   - **[Download dserve](https://github.com/peteretelej/dserve/releases)**
+Requires Go 1.24+
 
-#### Option 2
-Install via `go get`. (Requires Golang)
-
+```bash
+go install github.com/peteretelej/dserve@latest
 ```
-go get github.com/peteretelej/dserve
-```
+
+### Option 2: Download Binary
+
+Download from [Releases](https://github.com/peteretelej/dserve/releases)
+
+> **Note:** Requires Windows 10 or later. For Windows 7/8, use [v2.2.4](https://github.com/peteretelej/dserve/releases/tag/v2.2.4)
 
 ### Usage
 Enter the directory you'd like to serve and run
