@@ -20,8 +20,8 @@ go install github.com/peteretelej/dserve/v3@latest
 
 ```bash
 dserve                    # Serve current directory
-dserve -dir ./public      # Serve specific directory
-dserve -live              # With live reload
+dserve --dir ./public     # Serve specific directory
+dserve --live             # With live reload
 ```
 
 Visit http://localhost:9011
@@ -42,19 +42,19 @@ Visit http://localhost:9011
 
 ```bash
 # Development with live reload
-dserve -live
+dserve --live
 
 # Single-page application
-dserve -spa -live
+dserve --spa --live
 
 # Share files on local network
-dserve -webui -upload -zip
+dserve --webui --upload --zip
 
 # Secure with HTTPS (self-signed) and auth
-dserve -tls -basicauth admin:secret123
+dserve --tls --basicauth admin:secret123
 
 # Custom TLS certificates
-dserve -tls -tls-cert server.crt -tls-key server.key
+dserve --tls --tls-cert server.crt --tls-key server.key
 ```
 
 ## All Flags

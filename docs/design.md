@@ -59,9 +59,9 @@ Browser auto-refresh when files change.
 
 **Watch Patterns:**
 ```bash
--live              # Watch all files (*)
--live="*.html"     # Watch only HTML files
--live="*.html,*.css,*.js"  # Multiple patterns
+--live              # Watch all files (*)
+--live="*.html"     # Watch only HTML files
+--live="*.html,*.css,*.js"  # Multiple patterns
 ```
 
 **Excluded directories:** `.git`, `node_modules`, `vendor`, dotfiles
@@ -76,8 +76,8 @@ Serves a fallback file for client-side routing.
 - Preserves actual 404 for static assets (files with extensions)
 
 ```bash
--spa              # Use index.html
--spa=app.html     # Use custom file
+--spa              # Use index.html
+--spa=app.html     # Use custom file
 ```
 
 ### Compression (`-compress`)
@@ -107,7 +107,7 @@ HTTPS with automatic or custom certificates.
 
 **Custom certificates:**
 ```bash
--tls -tls-cert=server.crt -tls-key=server.key
+--tls --tls-cert=server.crt --tls-key=server.key
 ```
 
 ### File Upload (`-upload`)
@@ -145,7 +145,7 @@ Download directories as zip archives.
 HTTP Basic Authentication.
 
 ```bash
--basicauth user:password
+--basicauth user:password
 ```
 
 **Requirements:**
